@@ -1,176 +1,25 @@
 # Codex Harness Workflow
 
-> Humans own direction and judgment. AI organizes, executes, and shows its evidence.
+> An Agent Coding SOP that uses Markdown, project documents, and task contracts to organize human-AI collaboration.
 
-This is a Codex-first **human-AI collaboration workflow for software development**. It does not ask AI to take over the project, and it does not ask a human to micromanage every line. It gives both sides a shared understanding of **what they are building, which decisions require human approval, where AI may act, and what evidence is required before the work is complete**.
+Codex Harness Workflow consists of three skills: `init-harness`, `new-task`, and `subagent-orchestrator`. Its first fully validated reference implementation targets Codex, but its core is not a tool-specific API. It is a collaboration process that can be adapted to other coding agents:
+
+```text
+Establish a project Harness → turn requirements into contracts → implement, verify, and retain evidence
+       init-harness                 new-task                  subagent-orchestrator
+```
+
+The question behind this project is not “can AI write code?” It is this:
+
+> When a long-running project spans many sessions, features, and agents, how do you prevent context drift so that requirements, design decisions, rules, task state, and verification conclusions stay consistent over time?
 
 [简体中文](README.zh-CN.md)
 
-> **Status: v0.1.0 Beta candidate.** The three skills come from real project use; one complete reproducible release regression remains open.
+**Current version: v0.1.0-beta.** Codex is the fully validated reference implementation. The author has also adapted these skills in personal practice for coding agents such as Claude Code and Antigravity.
 
-## Project origin
+## Inspirations
 
-Codex Harness Workflow was originally designed and is maintained by
-[weiqiang612](https://github.com/weiqiang612). This repository is the official source:
-[github.com/weiqiang612/codex-harness-workflow](https://github.com/weiqiang612/codex-harness-workflow).
-
-The code, skills, templates, and associated documentation are available under the
-[MIT License](LICENSE), which requires applicable copyright and license notices to be preserved.
-Unless the original author explicitly states otherwise, modified versions are not official
-releases of this project and are not endorsed by the original author.
-
-## The one-minute story: why humans and AI need a shared agreement
-
-Imagine asking AI:
-
-> Add order refunds to an existing system, including customer requests, manager approval, and a visible refund result.
-
-### Ordinary chat-based collaboration
-
-The developer knows the business and AI can write code, but they do not begin with the same information:
-
-1. The human says “add refunds” and assumes the existing order rules are understood.
-2. AI avoids interrupting and guesses who can refund and which states are allowed.
-3. The human sees the page and discovers that the guessed behavior is not the real business rule.
-4. Frontend and backend agents make different guesses about fields and states.
-5. AI reports “done,” but the human cannot tell whether permissions, duplicate refunds, and rollback were verified.
-6. A new session begins, and both sides must reconstruct decisions from old chat messages.
-
-Neither side is the problem. The missing pieces are **shared context, explicit decision handoffs, and evidence for completion**.
-
-### With this human-AI collaboration workflow
-
-The same request becomes three clear collaboration handoffs:
-
-1. **Understand the project together:** with `init-harness`, AI studies the real code while the human supplies the goal and corrects business assumptions. Both get the same project map.
-2. **Define the feature together:** `new-task` puts ambiguity on the table. The human decides permissions, rules, and tradeoffs; AI records that agreement as a specification, acceptance criteria, and tasks.
-3. **Implement and accept together:** `subagent-orchestrator` coordinates implementation, review, and tests inside approved boundaries. The human keeps authority over major decisions and gives final acceptance from visible evidence.
-
-The result is not merely “code written by AI.” The human and AI become a team whose work can be handed off and reviewed:
-
-- the human can see what AI is relying on;
-- AI knows what it may decide and when it must ask;
-- frontend, backend, and tests share one approved contract;
-- completion comes from inspectable evidence, not an AI declaration;
-- a new session or agent can continue from shared project files.
-
-## How the three skills divide the work
-
-| Skill | The human owns | AI handles | They leave together |
-| --- | --- | --- | --- |
-| `init-harness` | Explain the goal, correct business understanding, confirm important constraints | Read code and configuration; organize existing requirements, architecture, database, API, and UI | A project map readable by both human and AI |
-| `new-task` | Decide important scope, permission, data, and experience tradeoffs | Surface ambiguity, analyze impact, draft the specification, and split the work | A feature contract approved by both sides |
-| `subagent-orchestrator` | Retain authority over major choices and acceptance that needs human judgment | Coordinate bounded implementation, review, tests, and repair | Code, verification evidence, and an honest completion state |
-
-Together they form one loop:
-
-```mermaid
-flowchart LR
-    H1[Human provides goals and judgment] --> I[init-harness]
-    A1[AI studies the real project] --> I
-    I --> C[Shared project context]
-    C --> N[new-task]
-    H2[Human confirms key tradeoffs] --> N
-    N --> S[Shared spec and acceptance criteria]
-    S --> O[subagent-orchestrator]
-    O --> A2[AI implements reviews and tests]
-    A2 --> E[Verification evidence]
-    E --> H3[Human gives final acceptance]
-```
-
-## Five common human-AI collaboration scenarios
-
-### 1. The human says “that project,” and AI opens the wrong folder
-
-**Collaboration failure:** the human knows their machine and casually says “change the existing project.” AI sees two similar folders and has to guess. Both may discover the mistake much later.
-
-**Handled by:** `init-harness`
-
-**Afterward:** AI uses real Maven, Gradle, npm, or other manifests to find the runnable project, then presents modules, ports, and commands for human confirmation. “This project” now means the same facts to both sides.
-
-**Inspectable result:** root/module `AGENTS.md`, real build commands, and scanned API/database context.
-
-### 2. The human says little, and AI assumes too much
-
-**Collaboration failure:** “add refunds” carries unstated human context. To keep moving, AI fills in who may refund, how many times, and what rollback means. Both sides believe the request was clear.
-
-**Handled by:** `new-task`
-
-**Afterward:** AI explains why each ambiguity matters. It handles routine technical choices, while the human confirms choices that change business behavior, security, data, APIs, or acceptance. Only then is the agreement written into `spec.md` and `tasks.md`.
-
-**Inspectable result:** scope, non-goals, key decisions, 3–6 executable acceptance criteria, and tasks mapped to each criterion.
-
-### 3. The human approved one requirement, but different agents read it differently
-
-**Collaboration failure:** frontend fields, backend responses, database facts, and UI states drift until integration.
-
-**Handled by:** `new-task` + `subagent-orchestrator`
-
-**Afterward:** AI turns the request into shared API, database, architecture, and UI contracts, with important changes confirmed by the human. Frontend, backend, and test agents then work from that contract instead of separately translating the original sentence.
-
-**Inspectable result:** contract tasks precede implementation, and frontend/backend/tests reference the same acceptance criteria.
-
-### 4. The human asks several agents for help and becomes the integration firefighter
-
-**Collaboration failure:** frontend, backend, and tests are assigned without dependencies or write boundaries. Two agents edit the same file, or each assumes another will add tests, leaving the human to stitch everything together.
-
-**Handled by:** `subagent-orchestrator`
-
-**Afterward:** the orchestrating agent builds a visible dependency graph and bounded assignments. Only independent work with disjoint write sets runs in parallel. Cross-module decisions return to the human instead of being guessed differently by each agent.
-
-**Inspectable result:** scoped agent briefs, changed-file handoffs, test results, and integration review.
-
-### 5. AI says “done,” and the human does not know whether to trust it
-
-**Collaboration failure:** AI treats “code generated” as “requirement complete.” The human gets a summary but cannot see whether tests, browser flows, responsive behavior, and failure paths were actually checked.
-
-**Handled by:** `subagent-orchestrator`
-
-**Afterward:** AI submits separate evidence for code, automated tests, frontend builds, and browser acceptance. Business feel and visual judgment remain with the human. No evidence means no passing state.
-
-**Inspectable result:** `passes` values, unchecked tasks, logs, screenshots, and explicit remaining blockers.
-
-## How it maps to traditional software development
-
-This workflow does not replace software engineering. It adds explicit human-AI handoffs to familiar stages. AI can take on more preparation and execution, while product responsibility, important tradeoffs, and final acceptance remain human-owned.
-
-| Traditional stage | Human role | AI role | Shared artifact |
-| --- | --- | --- | --- |
-| Project discovery and requirements | Explain goals, business context, and real constraints | Read existing code and organize unknowns | Confirmed project baseline |
-| Architecture, database, API, and UI/UX design | Own important product and technical tradeoffs | Summarize reality, analyze impact, and draft designs | Long-lived design and decision records |
-| Feature review | Answer questions that change business outcomes | Surface ambiguity, impact, and options | Scope, non-goals, and confirmed choices |
-| Work breakdown and Definition of Done | Confirm priorities and completion criteria | Generate acceptance criteria and dependency-aware tasks | Executable feature plan |
-| Frontend/backend development | Resolve escalated decisions and necessary interventions | Implement, test, and hand off within write boundaries | Reviewable code and test results |
-| Code review, integration, and acceptance | Judge whether behavior, experience, and risk are acceptable | Provide independent review and automated/UI evidence | A completion decision both sides can inspect |
-
-See [workflow architecture](docs/architecture.md) for the artifact contracts passed between stages.
-
-## Evidence from real use
-
-The workflow has been used on a fully anonymized Java/Spring Boot, Vue/TypeScript, and MySQL environmental-monitoring application.
-
-- `init-harness` created stable locations for requirements, architecture, database, API, UI, constraints, ADRs, and feature tasks.
-- One field-measurement feature entered `new-task` and produced **6 acceptance criteria** and **16 ordered tasks** without changing business code or the database during task creation.
-- A completed management workflow recorded **23 passing backend tests** plus successful frontend build and lint gates.
-- One UI acceptance run could not start its browser connection, so that gate remained incomplete instead of being presented as passed.
-
-This proves that the workflow produced traceable and reviewable artifacts. It is not a productivity benchmark, and no speed or defect-reduction percentage is claimed without reliable before/after data.
-
-Read the [anonymized case study](docs/case-study-environmental-monitoring.md) or inspect the [sanitized evidence bundle](examples/environmental-monitoring/).
-
-## Why it was designed this way
-
-These skills grew from studying Vibe Coding, spec-driven development, long-running agent harnesses, and then applying those ideas to real projects. They share one premise: **good AI Coding does not remove the human from the loop; it brings human judgment and AI execution together at the right moments.**
-
-- **Keep the flow of Vibe Coding:** humans express intent while AI performs substantial exploration, implementation, and verification.
-- **Adopt the SDD sequence:** `Spec → Plan → Tasks → Implement` prevents a vague request from becoming code immediately.
-- **Make decision authority explicit:** AI proceeds on low-risk technical details; choices affecting business behavior, permissions, data, or acceptance return to the human.
-- **Use black-box acceptance:** criteria say what action to perform and what result must be observed.
-- **Make long tasks resumable:** project and feature state live in files that a new session can read.
-- **Disclose context progressively:** `AGENTS.md` stays a short index while detailed requirements, designs, and constraints are loaded when relevant.
-- **Use the Harness as shared memory:** humans do not need to repeat everything and AI does not depend on short-lived chat history; skipped steps become gates and conflict-prone changes gain write boundaries.
-
-Primary influences:
+This workflow comes from real project practice and was informed by the following representative articles and engineering approaches:
 
 - [Thoughtworks: Spec-driven development](https://www.thoughtworks.com/en-gb/insights/blog/agile-engineering-practices/spec-driven-development-unpacking-2025-new-engineering-practices)
 - [GitHub Spec Kit](https://github.github.com/spec-kit/index.html)
@@ -178,66 +27,285 @@ Primary influences:
 - [Anthropic: Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps)
 - [Agents.md Guide for Java and Spring Boot Developers](https://josealopez.dev/en/blog/agents-md-java-spring-boot)
 
-The task lifecycle is A2A-inspired, but this repository does not implement or claim compliance with the standard A2A protocol.
+They inspired several directions used here: the fluid exploration of Vibe Coding; the “spec → plan → tasks → implementation” sequence of spec-driven development; external structured state and verification guardrails from Harness Engineering; and progressive project context through in-repository instruction files such as `AGENTS.md`. Traditional practices—documentation first, contract first, frontend/backend separation, code review, testing, and acceptance—provide the process backbone.
+
+This project is not a copy of any one approach. It combines those ideas with the maintenance lessons of real projects.
+
+## What it brings to long-running projects
+
+The central aim is to reduce **context drift** across sessions, features, and agents: the gradual divergence of a project's requirements, design, coding conventions, API contracts, task state, and verification conclusions.
+
+It externalizes, layers, and records critical collaboration state to make AI-assisted coding more stable, reliable, and reviewable. It does not promise error-free code or replace human judgment about business intent, risk, and final delivery. It gives that judgment a more stable basis and makes the collaboration process inspectable afterward.
+
+| Long-project drift or failure mode | Stability mechanism | Inspectable and auditable trace |
+| --- | --- | --- |
+| A new session or agent does not know why an earlier decision was made | Store high-frequency facts, long-lived design, and active work in separate layers loaded on demand | `AGENTS.md`, design documents, `CURRENT_PLAN.md` |
+| Team conventions, layer boundaries, and known pitfalls are gradually ignored | Classify rules as `always-do`, `ask-first`, and `never-do`; optionally sync an external standards source | Constraint documents, rule source, local additions |
+| A feature changes API, database, or UI behavior without updating long-lived documentation | Identify documentation impact while planning and schedule document work before or alongside implementation | Impact records, `spec.md`, `tasks.md` |
+| Frontend, backend, and tests derive different meanings from the same sentence | Confirm scope, non-goals, acceptance criteria, and shared contracts before implementation | API/database/UI contract tasks and acceptance criteria |
+| Parallel agents overwrite each other or implement against unstable assumptions | Resolve dependencies and shared contracts first; parallelize only disjoint write scopes | Task dependencies, ownership boundaries, diffs, review records |
+| An agent equates “code was generated” with “the requirement is complete” | Record test, build, lint, browser acceptance, and incomplete work separately | Passed, failed, and unverified evidence |
+| A later reviewer can only guess why a Git diff exists | Link requirements, decisions, task state, and verification results to code changes | A collaboration audit trail alongside Git history |
+
+## 1. Context should be loaded when needed, not accumulated forever
+
+`AGENTS.md` is a good home for project-level, high-frequency information that is worth reading in every session: project identity, runnable modules, common commands, important rules, and document navigation.
+
+It is not a good infinite knowledge base. Filling one file with every small requirement, historical decision, database detail, active task, and team rule forces agents to load a growing amount of information that is irrelevant to the current work. That lowers the signal-to-noise ratio of the context.
+
+This Harness therefore treats `AGENTS.md` as:
+
+> High-frequency rules + session entry point + context navigation
+
+Detailed requirements, architecture, database, API, UI, constraints, and task state live in their own documents. An agent reads them progressively for the current task. `AGENTS.md` is not an empty index; each kind of information has a place that is practical to maintain and load.
+
+## 2. Help agents follow team practice, not only generate generic code
+
+An AI agent can generate runnable code without knowing a team's naming patterns, layering boundaries, testing habits, past pitfalls, or sensitive-operation limits.
+
+The constraint layer in `init-harness` makes that experience explicit. It can import baseline coding standards and common pitfalls from an external source such as GitHub, combine them with project-local rules, and organize them into three levels:
+
+- `always-do`: rules that apply to every implementation;
+- `ask-first`: rules that require confirmation before changing business behavior, data, security, or the runtime environment;
+- `never-do`: explicitly prohibited actions.
+
+The author's `dev-standards` can be used as the default source. Users may provide their own URL or explicitly disable external imports. The point is not to pile up generic prompts; it is to make the constraints and known risks of the current team available before an agent changes code.
+
+## 3. Synchronize through task contracts, not repeated retelling
+
+The hard part of multi-agent work is not opening more agents. It is ensuring that they make consistent decisions from the same facts.
+
+This workflow uses specifications, acceptance criteria, task lists, long-lived design documents, and task status as shared external state. Frontend, backend, and test agents should not independently translate a natural-language request; they should work from one confirmed contract.
+
+This does not promise zero conflicts. It moves many conflicts from “we discovered different interpretations after implementation” to “we confirmed the contract and dependencies before implementation.”
+
+Its task lifecycle is inspired by A2A-style task communication and state, but this repository does not implement or claim compliance with the A2A protocol.
+
+## 4. Retain evidence as a complement to Git history
+
+Git records which files changed and when. It does not necessarily explain which requirement a change served, why a design was chosen, what was verified, or which checks remain incomplete.
+
+Harness documents, feature specifications, task state, and verification results supply that missing collaboration context. They do not replace Git; they let a developer or a new agent place a code change back in its requirement, design, and acceptance context for review, handoff, investigation, and continued work.
+
+## How the three skills work together
+
+```mermaid
+flowchart LR
+    A[Developer states the goal] --> B[init-harness]
+    B --> C[Layered project context and constraints]
+    C --> D[new-task]
+    D --> E[Spec acceptance criteria task list]
+    E --> F[subagent-orchestrator]
+    F --> G[Contract-first implementation review verification]
+    G --> H[Task state and evidence]
+    H --> I[Developer confirms the result]
+```
+
+| Skill | Core responsibility | Main artifacts |
+| --- | --- | --- |
+| `init-harness` | Establish the project baseline, constraints, and layered context | `AGENTS.md`, design documents, constraint layer, bootstrap environment, task tree |
+| `new-task` | Turn a request into a feature contract confirmed by a human | `spec.md`, acceptance criteria, `tasks.md`, documentation-impact record |
+| `subagent-orchestrator` | Coordinate implementation, review, verification, and closeout by dependency | Actual code diffs, verification evidence, task completion state |
+
+## What `init-harness` generates
+
+`init-harness` scans the real project first, then creates the following Harness at the project root. Existing `AGENTS.md` and constraint files are never silently overwritten: a replacement is shown for confirmation, and an existing `AGENTS.md` is backed up with a non-overwriting name before an approved replacement.
+
+```text
+<project-root>/
+├── AGENTS.md
+├── init.sh
+├── init.ps1
+├── .codex/
+│   ├── hooks.json
+│   └── session-start.js
+└── docs/
+    ├── 1-requirements/
+    │   ├── project_overview.md
+    │   └── requirements_analysis.md
+    ├── 2-designs/
+    │   ├── architecture.md
+    │   ├── db_schema.md
+    │   ├── api_contract.md
+    │   └── ui_prototype.md
+    ├── 3-constraints/
+    │   ├── always-do.md
+    │   ├── ask-first.md
+    │   ├── never-do.md
+    │   └── adr/
+    │       └── TEMPLATE.md
+    └── 4-tasks/
+        ├── CURRENT_PLAN.md
+        └── features/
+            └── README.md
+```
+
+| Area | Purpose | Change frequency |
+| --- | --- | --- |
+| `AGENTS.md` | High-frequency rules, project commands, document navigation, and entry point for current work; intentionally short | Low |
+| `docs/1-requirements/` | Project goals, business scope, and requirements analysis: “why and what are we building?” | Medium |
+| `docs/2-designs/` | Architecture, database, API, and UI contracts: “how are we going to build it?” | Medium |
+| `docs/3-constraints/` | Team experience and operating boundaries: always do, ask first, never do | Low to medium |
+| `docs/3-constraints/adr/` | Important architecture decisions and their rationale | Medium |
+| `docs/4-tasks/CURRENT_PLAN.md` | What is in progress and what comes next; fast recovery point for a new session | High |
+| `docs/4-tasks/features/` | Per-feature `spec.md`, `tasks.md`, acceptance, and progress records | High |
+| `init.sh` / `init.ps1` | Human-triggered environment bootstrap; never automatically kills an existing port owner | Environment-dependent |
+| `.codex/` | Lightweight session-start behavior for the Codex reference implementation; other agents adapt it to their own hook/startup mechanism | Runtime-dependent |
+
+Runnable backend services and frontend applications also receive their own `AGENTS.md`, so module commands and boundaries do not all accumulate in the root file. Overall, the structure separates **long-lived project facts** (requirements and design), **long-lived behavioral boundaries** (constraints), and **high-frequency dynamic state** (tasks). Agents load the relevant layer for their current stage of work.
+
+## How the skills evolved through real development
+
+The three skills were not designed all at once. They emerged from real issues in maintaining context, planning work, and coordinating multiple agents.
+
+### First: let the agent understand the real project — `init-harness`
+
+Projects already have code, configuration, databases, endpoints, pages, and historical rules. A one-time chat description misses facts, and every new session can force the developer to repeat entry points, commands, and limits.
+
+`init-harness` was designed to scan the real engineering context rather than guess from a short description. It establishes a durable Harness with project/module instructions, long-lived requirements and design documents, task locations, three levels of constraints, and lightweight session/bootstrap support.
+
+### Second: plan a task, then let documentation evolve with it — `new-task`
+
+`new-task` began from Plan-style and spec-driven development: before implementation, turn a natural-language request into scope, specification, acceptance criteria, and an ordered task list.
+
+Real work then revealed a second problem: each new feature may also change requirements, architecture, database, API, UI, or constraints. If task planning and documentation maintenance drift apart, developers still have to remember and repair the gaps manually.
+
+`new-task` therefore became a “task contract + documentation first” workflow. It reads the Harness and active state, identifies documentation impact, drafts scope and acceptance criteria, asks humans to decide material business/security/data/API/UX choices, and then puts implementation, documentation, and verification work together in `spec.md` and `tasks.md`.
+
+### Third: stabilize contracts before multi-agent development — `subagent-orchestrator`
+
+Frequent multi-agent work introduced two more problems: how to synchronize information and how to avoid conflicting concurrent edits.
+
+The answer is not to start every agent at once. The workflow first creates shared external state—specification, acceptance criteria, task list, long-lived design documents, and structured task progress such as `passes: true/false`. For work spanning frontend, backend, database, and API, it identifies dependencies and stabilizes the behavior, permissions, data model, and API contract before parallelizing independent work with disjoint write scopes.
+
+That mirrors a familiar frontend/backend process: **agree on the contract, implement separately, then integrate and accept**. `subagent-orchestrator` coordinates by dependency, constrains write boundaries, inspects real diffs, performs independent review and bounded repair, and closes work only with evidence.
+
+## Adapting to Claude Code, Antigravity, and other coding agents
+
+The core of these skills is an SOP, not a Codex-only command set. Their Markdown document structure, task contracts, acceptance criteria, task state, contract-first sequencing, and dependency ordering are reusable.
+
+You do not need to study every platform mechanism before migrating. Ask the target coding agent to do the adaptation itself:
+
+```text
+Read these three skills: init-harness, new-task, and subagent-orchestrator.
+Inspect the native capabilities of your current environment for project instructions,
+session initialization, subagents, browser verification, and task-state management.
+Preserve the three skills' workflow and artifact contracts, then create the smallest adapter
+for this environment. Mark steps without an equivalent capability as unavailable or incomplete;
+do not fabricate execution results.
+```
+
+The target agent should map the following concepts to its own capabilities:
+
+| SOP concept | Capability to map in the target agent |
+| --- | --- |
+| `AGENTS.md` and nested instructions | Its project-instruction file, instruction discovery mechanism, or compatible read strategy |
+| Session start and bootstrap | A session hook, startup prompt, project command, or an explicit statement that no equivalent exists |
+| Subagent orchestration | Create, message, wait, stop, and concurrency-control capabilities |
+| Browser acceptance | A real browser with navigation, screenshots, interaction, and console inspection |
+| Task state | The repository's Markdown/JSON contract, or an equivalent auditable state record |
+
+The author has installed and adapted these skills with agents such as Claude Code and Antigravity in personal practice. This repository still labels Codex as the only fully validated reference implementation: a different runtime becomes fully supported only when it has actual adapter files and acceptance evidence. See [cross-agent portability](docs/portability.md).
+
+## Relationship to traditional software development
+
+This workflow does not replace software engineering. It turns familiar engineering activities into collaboration contracts that agents can read, follow, and help maintain.
+
+| Traditional activity | What people own | How the skills contribute |
+| --- | --- | --- |
+| Project discovery and requirements | State business goals and correct facts | `init-harness` establishes a baseline from real code and configuration |
+| Architecture, database, API, and UI design | Decide important tradeoffs | The Harness gives long-lived design a stable home and entry point |
+| Feature review | Confirm scope, permissions, non-goals, and experience | `new-task` surfaces ambiguity and produces a reviewable spec |
+| Work breakdown and scheduling | Set priorities and delivery scope | `new-task` produces tasks mapped to acceptance criteria |
+| Frontend/backend development | Resolve major exceptions and new decisions | `subagent-orchestrator` applies contract-first sequencing |
+| Code review, integration, and acceptance | Judge whether risk is acceptable | Diff inspection, verification evidence, and honest incomplete states |
+| Handoff and continued iteration | Keep the real business direction correct | Documents, current plan, and task state resume later sessions |
+
+Agile delivery, code review, testing, CI/CD, and team management remain valuable. This SOP gives them stable context, boundaries, and handoffs when AI participates in development.
+
+## Evidence from real use
+
+The repository contains a fully sanitized snapshot from a real Java/Spring Boot, Vue/TypeScript, and MySQL application:
+
+- `init-harness` created requirements, architecture, database, API, UI, constraints, and task documents;
+- `new-task` produced 6 acceptance criteria and 16 tasks for a field-measurement feature;
+- task creation changed neither business code nor the database;
+- an adjacent implemented module recorded 23 passing backend tests plus passing frontend build and lint checks;
+- browser initialization failed, so desktop, mobile, and console checks correctly remained incomplete.
+
+This case demonstrates traceable context, reviewable tasks, explicit action boundaries, and a workflow that does not present unverified work as complete. It is not a productivity benchmark: no time, token, defect-rate, or labor-cost improvement is claimed without reliable baselines.
+
+Read the [full case study](docs/case-study-environmental-monitoring.md), inspect the [sanitized evidence bundle](examples/environmental-monitoring/), or run the [minimal task-board example](examples/minimal-task-board/).
+
+## Install and quick start
+
+### Codex reference implementation
+
+Copy the `init-harness`, `new-task`, and `subagent-orchestrator` directories under `skills/` into the Codex Skill directory, restart Codex, and use them from the real project root:
+
+```text
+Use init-harness to initialize this project.
+```
+
+Review and confirm the generated project context, then:
+
+```text
+Use new-task to plan: add a refund flow with customer submission and administrator approval.
+```
+
+After confirming the specification and implementation approach:
+
+```text
+Use subagent-orchestrator to implement TASK-001.
+```
+
+For Windows, macOS/Linux installation commands, external standards configuration, and browser selection, see the [installation guide](docs/installation.md).
+
+### Other coding agents
+
+Place the three skills where the target agent can read them. Ask it to read the three `SKILL.md` files and create the smallest adapter using the migration prompt above. Preserve document structure, task contracts, and completion state first; adapt hooks, subagent dispatch, and browser tools to the target runtime.
 
 ## When to use it
 
 Good fit:
 
-- an existing codebase;
-- a feature that touches frontend, backend, APIs, or data together;
-- medium-sized or complex work that benefits from multiple agents;
-- work that needs review, test, and acceptance evidence.
+- a codebase that will be maintained across multiple sessions;
+- medium or complex features spanning frontend, backend, APIs, or data;
+- work involving multiple agents where write boundaries and integration order matter;
+- work that needs tests and real acceptance evidence to establish completion.
 
 Probably too heavy:
 
 - fixing one typo;
-- a tiny local refactor with no behavioral or contract impact;
-- a disposable experiment with no maintenance needs.
+- a tiny local refactor with no behavior or contract impact;
+- a disposable experiment with no handoff requirement;
+- an early exploration phase that does not yet need durable project state.
 
-v0.1.0 focuses on medium-sized and complex changes. A lightweight path is planned for a later version.
+v0.1.0 intentionally stays bounded: skills alone do not attempt to cover CI/CD, deployment rollback, permission sandboxing, cost analysis, or long-term drift monitoring.
 
 ## Repository contents
 
 | Path | Contents |
 | --- | --- |
-| [`skills/init-harness`](skills/init-harness/) | Project-map generation skill |
+| [`skills/init-harness`](skills/init-harness/) | Project Harness initialization skill |
 | [`skills/new-task`](skills/new-task/) | Feature specification and task-generation skill |
 | [`skills/subagent-orchestrator`](skills/subagent-orchestrator/) | Multi-agent implementation, review, and acceptance skill |
-| [`docs`](docs/) | Architecture, portability, case study, and release checklist |
-| [`examples/environmental-monitoring`](examples/environmental-monitoring/) | Sanitized evidence from real use |
-| [`examples/minimal-task-board`](examples/minimal-task-board/) | Dependency-free fixture for reproducing the three-step workflow |
-| [`scripts/verify.ps1`](scripts/verify.ps1) | Structure, link, privacy, and release checks |
+| [`docs`](docs/) | Architecture, installation, portability, case study, and release documents |
+| [`examples/environmental-monitoring`](examples/environmental-monitoring/) | Sanitized evidence bundle from real project use |
+| [`examples/minimal-task-board`](examples/minimal-task-board/) | Independently runnable minimal workflow example |
+| [`scripts/verify.ps1`](scripts/verify.ps1) | Structure, link, privacy, and release checks for maintainers only |
 
-## Install and use
-
-Copy the three directories under `skills/` into the Codex Skill directory, restart Codex, then use
-`init-harness`, `new-task`, and `subagent-orchestrator` in sequence. See the
-[installation guide](docs/installation.md) for Windows, macOS/Linux, standards-source overrides,
-and browser selection examples.
-
-See the [changelog](CHANGELOG.md) and the
-[v0.1.0-beta release notes](docs/releases/v0.1.0-beta.md) for the current release scope.
-
-## Contributor quick start
-
-Run the base checks:
+You do not need the verification script to install or use the skills. Maintainers and contributors can run it after changing this repository:
 
 ```powershell
 pwsh -File .\scripts\verify.ps1
-```
-
-Run strict release checks:
-
-```powershell
 pwsh -File .\scripts\verify.ps1 -Release
 ```
 
-Before release, also perform the [minimal release smoke test](docs/release-smoke-test.md) and review
-the [release checklist](docs/release-checklist.md).
+See the [changelog](CHANGELOG.md), [v0.1.0-beta release notes](docs/releases/v0.1.0-beta.md), and [release smoke test](docs/release-smoke-test.md).
 
-## Current boundaries
+## Project and license
 
-- Codex is currently the only fully supported reference implementation.
-- Other coding agents need adapters for project instructions, lifecycle hooks, browser capabilities, and subagent collaboration; see [portability](docs/portability.md).
-- This project uses the MIT License; the license does not imply endorsement of modified versions.
+Codex Harness Workflow was originally designed and is maintained by [weiqiang612](https://github.com/weiqiang612). Its official repository is [github.com/weiqiang612/codex-harness-workflow](https://github.com/weiqiang612/codex-harness-workflow).
+
+The code, skills, templates, and documentation are available under the [MIT License](LICENSE). Applicable copyright and license notices must be preserved; modified versions are not automatically official versions of this project or endorsed by the original author.
