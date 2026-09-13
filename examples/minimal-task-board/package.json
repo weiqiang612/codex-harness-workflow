@@ -1,0 +1,12 @@
+{
+  "name": "harness-minimal-task-board",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test --test-isolation=none"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

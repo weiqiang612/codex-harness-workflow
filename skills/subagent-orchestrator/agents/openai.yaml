@@ -1,0 +1,4 @@
+interface:
+  display_name: "Subagent Orchestrator"
+  short_description: "按任务边界协调子 Agent 的开发、审查、验收与闭环交付"
+  default_prompt: "Use $subagent-orchestrator to execute a Harness task through scoped subagents, review, and acceptance."
