@@ -12,6 +12,10 @@ Antigravity workflow for requirements, design contracts, and task planning, whil
 keeping Codex-native session start behavior through `.codex/hooks.json` and
 `.codex/session-start.js`.
 
+Initialize missing project guidance; do not invoke initialization for routine feature work.
+In an existing Harness, change only the requested missing or outdated parts. Preserve current
+project rules and user decisions rather than restoring stronger template defaults.
+
 ## What this skill produces
 
 ```text
@@ -48,12 +52,15 @@ Submodules that qualify get their own `AGENTS.md`.
 
 ## Execution phases
 
-Work through these phases in order. Do not skip phases. Do not narrate phase transitions.
+Use the phases applicable to the requested initialization or maintenance. Do not rescan or
+generate unrelated areas merely to complete a phase list. Do not narrate phase transitions.
 
 ### Phase 1 — Scan the project
 
 Read the following files if they exist. Use native shell commands or scripts.
 Do not ask the user to paste content.
+Start with manifests and existing guidance; inspect representative source only as needed to
+seed accurate baselines. Do not inventory every route/table or rebuild an existing task history.
 
 **Scan constraints**
 - Use a shallow pass (`maxdepth 2`) to detect immediate submodules and monorepo layout.
@@ -142,9 +149,11 @@ Exception: for `docs/3-constraints/never-do.md`, `ask-first.md`, and `always-do.
 - if existing constraint files fail this audit, draft a minimal repair and include it in the
   Phase 4 existing-governance checkpoint; do not modify it silently
 
-### Phase 3 — Generate all files
+### Phase 3 — Prepare the required files
 
-Generate candidate content in a single pass using `references/templates.md`.
+For fresh initialization, generate the advertised missing scaffold using `references/templates.md`.
+For an existing Harness, prepare only the requested missing/outdated files. Templates provide
+structure, not permission to impose new architecture, API conventions or project rules.
 Populate templates with data from Phase 1. Keep replacements for existing governance files in
 memory until the Phase 4 checkpoint.
 
@@ -180,7 +189,7 @@ memory until the Phase 4 checkpoint.
 - Generate `.codex/hooks.json` and `.codex/session-start.js`.
 - The hook must stay under 3 seconds.
 - No server startup, database reset, process termination, blocking health checks, or heavy scans.
-- If the configured service port has no listener, print only a concise "service not started" diagnostic with the explicit `init.ps1` / `init.sh` commands, then exit successfully. Do not print git or task context after this diagnostic.
+- If the configured service port has no listener, report it briefly and continue printing git/task context. Service status is diagnostic, not a prerequisite for task context; still exit successfully without starting or waiting for a service.
 - Treat `init.ps1` / `init.sh` as human-triggered, heavyweight bootstrap entrypoints. Never instruct the hook or an agent to invoke them automatically merely because a service is absent.
 
 **Constraints generation**
@@ -193,6 +202,9 @@ memory until the Phase 4 checkpoint.
 - Add explicit DB/API contract rules that reference:
   - `docs/2-designs/api_contract.md`
   - `docs/2-designs/db_schema.md`
+- Keep routine affected checks distinct from release validation and separately authorized
+  external actions. Do not generate unconditional full-test/retest requirements or duplicate
+  approval checkpoints already covered by the user's scope.
 
 **Design docs generation**
 - Seed `api_contract.md` with scanned endpoint baselines or an empty placeholder.
@@ -200,8 +212,8 @@ memory until the Phase 4 checkpoint.
 
 ### Phase 4 — Write files to disk
 
-Create missing parent directories and missing scaffold files directly; invoking this skill
-authorizes creation of the advertised scaffold.
+Create missing directories/files within the agreed scope. Invoking full initialization
+authorizes the advertised scaffold; incremental maintenance does not authorize unrelated files.
 
 Before changing an existing root or submodule `AGENTS.md`, or an existing file under
 `docs/3-constraints/`:
@@ -215,7 +227,7 @@ Do not modify other existing `docs/` files during initialization.
 ### Phase 5 — Validate generated output
 
 Before reporting success:
-- verify every required scaffold path exists, accounting for explicitly preserved existing files
+- verify paths required by the agreed scope exist, accounting for explicitly preserved files
 - verify generated files contain no unresolved `{{...}}` placeholders
 - parse `.codex/hooks.json` as JSON
 - run a syntax-only check for `.codex/session-start.js` and `init.ps1` when their runtimes exist
@@ -225,58 +237,12 @@ Before reporting success:
 
 Fix generation errors that do not require a material decision. Leave preserved user files intact.
 
-### Phase 6 — Generate the summary
+### Phase 6 — Report briefly
 
-Print this after all files are written. This is the only output the user sees.
-
-```text
-## Harness scaffold generated
-
-**Project:** {{PROJECT_NAME}}
-**Stack:** {{TECH_STACK_SUMMARY}}
-
-### Files created
-- AGENTS.md
-- init.sh
-- init.ps1
-- .codex/hooks.json
-- .codex/session-start.js
-- docs/1-requirements/project_overview.md
-- docs/1-requirements/requirements_analysis.md
-- docs/2-designs/architecture.md
-- docs/2-designs/db_schema.md
-- docs/2-designs/api_contract.md
-- docs/2-designs/ui_prototype.md
-- docs/3-constraints/never-do.md
-- docs/3-constraints/ask-first.md
-- docs/3-constraints/always-do.md
-- docs/3-constraints/adr/TEMPLATE.md
-- docs/4-tasks/CURRENT_PLAN.md
-- docs/4-tasks/features/README.md
-[list submodule AGENTS.md files]
-[list skipped files that already existed]
-
-### Assumptions made
-[one line per assumption]
-
-### Action required
-1. Run the platform init script once now if the dev server is not running:
-   - Windows: `pwsh -ExecutionPolicy Bypass -File .\init.ps1`
-   - Windows fallback: `powershell -ExecutionPolicy Bypass -File .\init.ps1`
-   - macOS/Linux/WSL/Git Bash: `bash init.sh`
-2. Review `docs/2-designs/api_contract.md` and `docs/2-designs/db_schema.md`.
-3. Review `docs/3-constraints/` to confirm project-specific contract and boundary rules.
-[if AGENTS.md.bak exists, ask user to compare migrated headings]
-
-### Middleware-specific rules added
-[one line per middleware]
-
-### dev-standards fetch
-[disabled / success with resolved base URL / partial with resolved base URL / missing with resolved base URL]
-
-### Stacks detected
-[one line per stack]
-```
+Report created/preserved areas, actual validation results and material warnings (including
+external standards fetch status). State any user decisions still needed. Show manual startup
+commands only when a local environment is relevant; do not prescribe starting services merely
+because a port is absent. Do not repeat the scaffold inventory already shown in the diff.
 
 ## Constraints for generated content
 

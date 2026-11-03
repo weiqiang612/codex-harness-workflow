@@ -7,7 +7,8 @@ description: Execute a Harness feature task through scoped Codex subagents, cont
 
 # Subagent Orchestrator
 
-Execute one existing Harness task package to completion. Treat `spec.md` as the acceptance source of truth, `tasks.md` as the execution ledger, and long-lived Harness documents as shared contracts.
+Execute one existing Harness task package. Follow current user decisions and project constraints;
+use `spec.md` for agreed acceptance, `tasks.md` for execution state, and maintained documents for shared contracts.
 
 ## Operating contract
 
@@ -15,6 +16,7 @@ Execute one existing Harness task package to completion. Treat `spec.md` as the 
 - Obey the active system concurrency limit. Count the primary agent as one active slot.
 - Keep the primary agent responsible for orchestration, conflict checks, integration, verification, and user communication.
 - Give each subagent a concrete, bounded, independently executable scope. Do not delegate the entire task.
+- Delegate only when independent work or review justifies its coordination cost; a free slot alone is not a reason. Small repairs may stay with the primary agent.
 - Share the filesystem intentionally: agents see each other's edits. Assign non-overlapping file ownership and never ask two agents to edit the same file concurrently.
 - Preserve user changes and unrelated dirty-worktree changes. Never use destructive reset or checkout operations.
 - Ask for user input only when a contract choice, approval-sensitive action, or unresolved conflict would materially change the result. Self-recover routine failures first.
@@ -80,33 +82,35 @@ After development agents finish:
 
 1. Inspect `git status`, the complete diff, and each changed file. Separate task changes from pre-existing changes.
 2. Check contract alignment, AC coverage, file-boundary compliance, error handling, security, regressions, and constraint violations.
-3. Run targeted tests first, then the task's required broader gates in the primary agent context.
-4. Start an independent review subagent when a free slot exists and the change is non-trivial. Give it the spec, constraints, and raw diff or changed files; do not provide suspected findings or the intended answer.
+3. Run affected checks first; use broader gates when changed behavior, project policy or a release candidate requires them. Reuse passing evidence only when relevant inputs and conditions are unchanged.
+4. Use an independent review subagent when risk/complexity justifies it and delegation is authorized. Give it the spec, constraints and raw diff; do not seed the expected findings. A small fix can use primary-agent review.
 5. Classify findings by severity and evidence. Fix verified critical or high-severity issues before acceptance.
 
 ### Bounded repair loop
 
 - Route a finding to the original owner only when its file boundary remains clear; otherwise fix it in the primary agent.
-- Re-run the relevant review and validation after each repair.
-- Allow at most two delegated repair rounds for the same class of blocking defect.
-- After two unsuccessful rounds, stop delegating, summarize the evidence, and either solve it locally or ask the user only if a material decision is required.
+- After a repair, repeat only review/checks whose evidence it invalidated.
+- After two unsuccessful rounds for the same underlying cause, stop the repeated strategy and diagnose locally before further delegation or remote runs. Different files/errors can share one cause.
+- Respect existing authorization/run limits; ask only for a material decision not already covered.
 
 ## Phase 5 — Acceptance
 
-Execute every applicable AC from `spec.md` using the most direct evidence available.
+Execute applicable ACs using direct evidence. If the user changes scope, update spec/tasks and
+record removed/deferred requirements explicitly; do not silently retain obsolete gates or mark them passed.
 
 For UI work or `AC-UI-UX`:
 
-1. Start services with project-defined commands and poll project-defined health signals with a bounded timeout.
-2. Use the browser capability recorded in `spec.md` or `tasks.md`. For older task packages that
-   do not name one, prefer Chrome MCP when available, otherwise use another available real-browser
-   capability. Do not build or install a new adapter unless the user asks.
-3. Verify desktop `1440x900` and mobile `375x812` layouts.
-4. Exercise relevant hover, focus, loading, empty, success, error, and permission states.
-5. Audit the browser console and require zero uncaught JavaScript errors.
-6. Capture deterministic screenshots in a user-visible project or requested artifact location. Do not assume Antigravity session paths or `file:///` walkthrough links.
+1. Use only the services needed by the affected flow, with project-defined startup/health commands and existing authorization. A stopped local service is not evidence that a deployed app is broken.
+2. For web targets use the browser capability recorded in `spec.md` or `tasks.md`; otherwise prefer an available real browser such as Chrome MCP. Native/Flutter targets use the project's appropriate widget, integration or device checks. Do not build/install adapters to replace unavailable tools.
+3. Choose layout checks from supported devices and changed behavior, not a fixed desktop/mobile matrix. For a full-screen default view, check primary controls fit without unintended clipping/scrolling; preserve intentional mobile and long-content scrolling.
+4. Exercise affected interactions/states; select hover, focus, loading, error, permissions, resize and content-growth checks where relevant.
+5. Check relevant console/platform errors and distinguish new defects from existing issues; enforce any explicit zero-error AC.
+6. Capture named screenshots when required by visual acceptance or the user. Reuse setup/evidence rather than repeating full business flows for each screenshot.
 
-If browser tooling is unavailable, do not claim UI acceptance passed. Report the exact unverified AC and continue with all other safe verification.
+Functional tests or a build alone do not establish visual/device acceptance. Report verified results,
+visual differences and unverified behavior separately; implementation fidelity is not user design approval.
+
+If a required UI capability is unavailable, leave that check unverified, report it and continue other safe work.
 
 For non-UI work, use tests, API calls, database checks, logs, or other project-defined evidence. Never set `passes: true` without current evidence.
 
@@ -117,7 +121,7 @@ Only after implementation and required acceptance gates pass:
 1. Set each verified AC's `passes` field to `true`; leave unverified or failing ACs false.
 2. Check only completed items in `tasks.md`. Do not bulk-check incomplete work.
 3. Set task status to completed only when all required tasks and ACs are complete.
-4. Update `docs/4-tasks/CURRENT_PLAN.md` minimally, preserving unrelated and completed entries.
+4. Update CURRENT_PLAN's current status minimally, preserving unrelated/completed work; keep process history in the existing task report.
 5. Update long-lived Harness documents only when the implementation changed the facts they describe.
 6. Create a walkthrough or screenshot report only when the task, project conventions, or user requests it.
 

@@ -16,8 +16,8 @@ All file templates for the `init-harness` skill.
 
 ## Session start
 The `.codex/hooks.json` SessionStart hook runs automatically on every session.
-When the configured dev server is running, it injects dev-server status, git context, and a compact `CURRENT_PLAN.md` snapshot.
-When the configured service port is not listening, it prints only a concise "service not started" diagnostic and exits without starting or waiting for anything.
+It injects git context and a compact `CURRENT_PLAN.md` snapshot independently of local service status.
+When a configured service port is not listening, it reports that state and continues without starting or waiting for anything.
 
 Run the platform init script only when the dev server is not running:
 - Windows: `pwsh -ExecutionPolicy Bypass -File .\init.ps1`
@@ -49,7 +49,7 @@ Run the platform init script only when the dev server is not running:
 3. Read the active feature `spec.md`.
 4. Read `docs/2-designs/` if the task touches API or DB behavior.
 5. Check `docs/3-constraints/never-do.md` before non-trivial changes.
-6. Run `{{TEST_COMMAND}}` early and often.
+6. Run affected checks; reuse passing results when relevant inputs/conditions are unchanged. Full release gates follow project policy.
 7. Update `docs/4-tasks/features/<active-task>/tasks.md` as work progresses.
 8. Update `docs/4-tasks/CURRENT_PLAN.md` when the feature is complete.
 
@@ -314,7 +314,6 @@ try {
     console.log(`   Start manually when needed:`);
     console.log(`   Windows: pwsh -ExecutionPolicy Bypass -File .\\init.ps1`);
     console.log(`   macOS/Linux/WSL/Git Bash: bash init.sh`);
-    process.exit(0);
   }
 } catch {}
 
@@ -436,9 +435,9 @@ console.log('');
 # 接口设计与契约 (API Contract)
 
 ## 1. 全局设计原则 (API Design Guidelines)
-- **协议与前缀**：RESTful API，统一前缀 `/api/v1`。
-- **响应体格式**：所有接口包装在统一响应体内。
-- **错误码规范**：4xx 代表客户端错误，5xx 代表服务端错误。
+- **协议与前缀**：记录已扫描项目的实际协议与路由前缀，不自动新增 `/api/v1`。
+- **响应体格式**：沿用当前契约；初始化文档不改变已有响应结构。
+- **错误行为**：记录实际错误语义；尚未确定的契约明确标为待设计，不凭模板推断。
 
 ## 2. 已扫描的接口清单 (Scanned API Endpoints)
 {{SCANNED_APIS}}
@@ -475,8 +474,8 @@ console.log('');
 
 ## File boundaries
 - 🚫 Edit generated directories such as `node_modules/`, `vendor/`, `dist/`, `target/`
-- 🚫 Modify CI, deployment, or production configuration without explicit approval
-- 🚫 Modify files outside the active spec scope
+- 🚫 Change CI, deployment or production behavior beyond the existing authorization
+- 🚫 Expand the delivery goal without agreement; necessary related file edits belong to the authorized task
 
 ## Database & API design contracts
 - 🚫 Change API request or response structures without updating `docs/2-designs/api_contract.md`
@@ -484,8 +483,9 @@ console.log('');
 - 🚫 Change schema-affecting code without a corresponding migration when the project uses migrations
 
 ## Tests
-- 🚫 Delete or weaken a failing test to make the build pass
+- 🚫 Delete or weaken tests to hide defects; obsolete or equivalent tests may be consolidated with a reason
 - 🚫 Replace assertions with logs
+- 🚫 Copy task-numbered tools/tests or add expensive routine checks without a concrete benefit
 ```
 
 ---
@@ -495,7 +495,8 @@ console.log('');
 ```markdown
 # Ask First
 
-⚠️ Confirm before taking any of these actions.
+⚠️ Confirm these boundaries only when existing authorization does not cover them.
+Necessary local edits, affected checks and local commits within the agreed task may proceed.
 
 ## Dependencies
 - ⚠️ Add a new dependency or plugin
@@ -503,8 +504,7 @@ console.log('');
 
 ## Architecture & structure
 - ⚠️ Introduce a new architectural layer or abstraction
-- ⚠️ Rename a public API, type, or module
-- ⚠️ Move modules across directories/packages
+- ⚠️ Rename or move public interfaces/modules in a way that affects external compatibility
 - ⚠️ Add a new service or submodule
 
 ## Database & API contracts
@@ -514,8 +514,11 @@ console.log('');
 - ⚠️ Add or remove indexes
 
 ## CI / deployment
-- ⚠️ Modify `.github/workflows/`, `Dockerfile`, or `docker-compose.yml`
+- ⚠️ Change CI scope, deployment behavior or environment configuration outside the agreed task
+- ⚠️ Add spending or exceed agreed remote-run limits
 - ⚠️ Change production or staging environment configuration
+- A specifically approved execution chain covers its agreed steps; do not ask at every step.
+  Material scope/candidate changes require reconsideration; merge/CI approval is not production approval.
 ```
 
 ---
@@ -535,18 +538,18 @@ console.log('');
 - ✅ Check `docs/3-constraints/never-do.md` before non-trivial changes
 
 ## Before committing
-{{LINT_ALWAYS}}
-- ✅ Run `{{TEST_COMMAND}}`
+- ✅ Run affected tests/lint; documentation-only edits need documentation checks, not application regression
+- ✅ Reuse passing results only when relevant source, dependencies and conditions are unchanged; release candidates still follow project gates
 - ✅ Confirm no secrets are staged
 - ✅ Update `docs/4-tasks/features/<active-task>/tasks.md`
-- ✅ Update `docs/4-tasks/CURRENT_PLAN.md`
+- ✅ Keep only current state in `docs/4-tasks/CURRENT_PLAN.md`; detailed history belongs in the existing task report
 - ✅ Keep `docs/2-designs/` in sync with implementation when contracts change
 
 ## General
 - ✅ Use explicit types where the stack expects them
 - ✅ Define constants for repeated values
-- ✅ Write tests before calling the task done
-- ✅ Re-run tests after each logical change
+- ✅ Verify changed behavior and add/update regression tests when they protect a meaningful risk
+- ✅ Assess execution/maintenance cost before adding tools or gates; after two failures of the same cause, reassess before another remote run
 - ✅ Sync long-lived Harness documents (`docs/1-requirements/`, `docs/2-designs/`, `docs/3-constraints/`, `AGENTS.md`) whenever you change what they describe — do not defer documentation updates to later.
 ```
 

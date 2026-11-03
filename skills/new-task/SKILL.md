@@ -1,292 +1,129 @@
 ---
 name: new-task
-description: Creates a new feature task from a natural language requirement description by drafting a spec, resolving ambiguities, confirming the implementation approach, and generating task files under the Harness task tree. Use when starting a feature, defining scoped implementation work, or turning a requirement into an executable task package.
+description: Create a scoped Harness task package when the user asks to define or plan a new task. Use existing tasks for routine fixes; scale acceptance and verification to actual impact.
 ---
 
 <!-- Copyright (c) 2026 weiqiang612. Licensed under the MIT License. Official source: https://github.com/weiqiang612/codex-harness-workflow -->
 
 # new-task
 
-This skill turns a natural language requirement into a structured, executable task package.
-It is the Harness entry point for new feature work: it creates the task package, updates
-`CURRENT_PLAN.md`, identifies affected long-lived Harness documents, and adds the required
-maintenance work to `tasks.md`.
+Turn an agreed requirement into `spec.md`, `tasks.md`, and a concise entry in
+`docs/4-tasks/CURRENT_PLAN.md`. Preserve project conventions and authorization boundaries.
 
-It does not replace `init-harness`. Do not rebuild the Harness scaffold, regenerate hooks, or
-refresh project baselines during task creation unless the feature itself explicitly requires
-those runtime files to be maintained.
+## Choose the necessary scope
 
+- A routine fix in an existing task does not need a new package. If neither the user nor the
+  project requires a package, handle a small, clear fix directly with affected checks.
+- If the user explicitly asks to create a task, create the smallest useful package. Do not
+  invent work to fill a template or a minimum number of ACs/tasks.
+- Use fuller planning for actual dependencies, cross-module contracts or material choices.
+  These are decision criteria, not extra modes or configuration files.
+- Do not rebuild the Harness, regenerate hooks or update unrelated baselines. Task creation
+  changes only feature spec/tasks and CURRENT_PLAN unless the user asks otherwise.
 
-## Compatibility contract
+## Read relevant context
 
-All agents using this skill must follow this minimum contract, even when local phase wording differs:
-- Do not rebuild the Harness scaffold during task creation. Create or update only the feature `spec.md`, feature `tasks.md`, and `docs/4-tasks/CURRENT_PLAN.md`, unless the user explicitly asks for runtime or scaffold file changes.
-- Always read root `AGENTS.md` before generating `tasks.md`; use it to extract project commands, plan structure, boundary rules, and submodule entrypoints, not as a maintenance target by default.
-- Always read `docs/4-tasks/CURRENT_PLAN.md`, `docs/1-requirements/project_overview.md`, `docs/3-constraints/never-do.md`, `docs/3-constraints/ask-first.md`, and `docs/3-constraints/always-do.md` before drafting the final task package.
-- Read `docs/1-requirements/requirements_analysis.md` when business scenarios, roles, rules, workflows, or scope boundaries might change.
-- Read the relevant `docs/2-designs/` documents when API, database, architecture, UI, or project-specific design behavior might change.
-- Derive test and lint gates from root `AGENTS.md` or explicit project configuration. Omit unavailable gates; do not invent lint commands when lint is not configured.
-- Never write unresolved template placeholders such as `{{TEST_COMMAND}}`, `{{LINT_COMMAND}}`, or `{AC ids}` into generated task files.
-- Use a documentation impact matrix and include maintenance tasks only for long-lived Harness documents whose described facts change.
-- Treat `project_overview.md` and `requirements_analysis.md` as general Harness requirements documents. Maintain `project_overview.md` for project goals, background, core modules, or business boundary changes; maintain `requirements_analysis.md` for roles, use cases, workflows, rules, or scope changes.
-- Do not add a mandatory `config` impact dimension unless the project has a centralized configuration document. New environment variables or config keys must still be recorded in `spec.md` notes and implementation or verification tasks.
-- Do not read every ADR by default. List ADRs, read `TEMPLATE.md`, and read only ADRs clearly related to the task decision.
-- For UI acceptance, use the browser capability explicitly requested by the user. Otherwise
-  default to Chrome MCP. This is an invocation-level choice; do not create a browser adapter
-  framework or project configuration file. Record the resolved capability in the generated AC
-  and task. If it is unavailable during implementation, leave UI acceptance incomplete.
-## Prerequisites
+Read root `AGENTS.md`, CURRENT_PLAN, applicable constraints and any existing related task.
+Reuse already-read context when unchanged. Derive real test/lint and acceptance commands
+from the project; do not invent unavailable commands, runtimes or tools.
 
-The following should exist:
-- `docs/4-tasks/`
-- `docs/4-tasks/CURRENT_PLAN.md`
+Read other documents only when their facts matter:
 
-If they do not exist, create the minimal task directory structure using the templates from
-`init-harness`, then warn that full Harness setup is recommended.
+- `project_overview.md` / `requirements_analysis.md`: goals, roles, business rules or scope.
+- `architecture.md`: services, layers, cross-module behavior or trust boundaries.
+- `api_contract.md` / `db_schema.md`: API/data behavior and compatibility.
+- `ui_prototype.md` and submodule instructions: affected screens and platform support.
+- Related ADRs: important decisions; do not read all ADRs or force a new ADR for a routine fix.
+- Runtime files such as init scripts/hooks: only when their behavior actually changes.
 
-## What this skill produces
+If no Harness task directory exists, create only the minimal task structure needed using
+`init-harness` templates. Do not turn task creation into full initialization.
 
-```text
-docs/4-tasks/features/
-└── TASK-{NNN}-{slug}/
-    ├── spec.md
-    └── tasks.md
-```
+## Resolve intent and choices
 
-`docs/4-tasks/CURRENT_PLAN.md` is updated to point to the new feature.
+1. Identify the objective, non-goals, affected behavior and existing implementation to reuse.
+2. For a new package, inspect TASK numbers and choose the next ID and a short slug.
+3. Make routine implementation choices directly within scope.
+4. Ask only when a material choice changes scope, business behavior, contracts, security,
+   cost or acceptance, or project rules require authorization not already present. Present
+   concrete alternatives together with a recommendation; resolve them before finalizing
+   affected parts. Do not ask again for an approach already approved.
+5. Explain the approach briefly. A separate confirmation checkpoint is needed only for those
+   material decisions or when the user explicitly requests one.
 
-## Decision ownership
+## Draft acceptance and documentation impact
 
-- Make routine implementation choices directly when they do not materially affect feature scope, business behavior, the data model, API contract, security boundary, post-login destination, or acceptance criteria.
-- When two or more reasonable approaches would materially affect any of those areas, pause before writing task files. Present concrete options, their consequences, and a recommendation; wait for the user's choice before finalizing the task package.
-- Do not hide a material choice inside a default assumption. Record the user's selected option in `spec.md` and `tasks.md` when it affects implementation or verification.
+Use [references/templates.md](references/templates.md) as an adaptable structure. Write only
+independently verifiable outcomes needed by the requirement; there is no fixed AC count.
+Cover failure, integrity, security and edge cases where the change affects them.
 
-## Execution phases
+Each AC has `id`, `category`, `description`, concrete `steps` and `passes: false`.
+Categories are `functional`, `security`, `edge-case`, `performance` or `integration`.
+Generated files and a successful build alone do not establish acceptance.
 
-Work through these phases in order. Do not skip phases.
+For a small task, a short note naming affected documents (or none) is enough unless the
+project requires a matrix. For broader work use the project's matrix; supported keys are:
 
-### Phase 1 — Parse the requirement and assign task ID
+| Key | Facts that require maintenance when changed |
+|---|---|
+| requirements | Goals, roles, use cases, business rules or scope |
+| architecture | Services, layers, cross-module flows or trust boundaries |
+| api | Endpoints, request/response shapes, authorization or compatibility |
+| db | Tables, fields, indexes, constraints or migrations |
+| ui | Pages, visible states, navigation or interactions |
+| constraints | Long-lived safety, approval or mandatory behavior rules |
+| adr | An important tradeoff or durable architectural decision |
+| agent-runtime | Actual startup/health/test commands or agent entrypoints |
 
-- List directories under `docs/4-tasks/features/`.
-- Find the highest `TASK-NNN` number and increment it.
-- Extract:
-  - core intent
-  - explicit constraints
-  - explicit out-of-scope items
-- Generate a short kebab-case slug, max 4 words.
-- Define the target path in memory only. Do not write files yet.
+Mark only changed facts. A local cache or internal helper does not automatically require an
+architecture/ADR task. Combine related maintenance into implementation tasks where useful;
+settle contracts before dependent code. Do not add a `config` document/dimension unless the
+project has one; record changed environment/config keys in notes.
 
-### Phase 2 — Read Harness context and classify documentation impact
+### UI acceptance follows the platform
 
-Before drafting the spec, read:
-- `docs/4-tasks/CURRENT_PLAN.md`
-- `docs/3-constraints/never-do.md`
-- `docs/3-constraints/ask-first.md`
-- `docs/3-constraints/always-do.md`
-- `docs/2-designs/architecture.md`
-- `docs/2-designs/api_contract.md`
-- `docs/2-designs/db_schema.md`
+For UI changes include `AC-UI-UX`; it may be the only AC for a small UI fix. Record actual
+capabilities and affected screens rather than copying a universal matrix.
 
-Conditionally read only when the requirement might touch that area:
-- `docs/1-requirements/requirements_analysis.md`
-- `docs/2-designs/ui_prototype.md`
-- `docs/3-constraints/adr/`
-- submodule `AGENTS.md` when a specific runnable module is affected
-- `.codex/session-start.js`
-- `init.sh`
-- `init.ps1`
+- For web UI, an explicit user choice overrides the default; otherwise default to Chrome MCP
+  when available. Another available real browser is acceptable; do not build/install an adapter.
+- For native/Flutter UI, use applicable project widget, integration or device validation.
+  Use a browser only for an actual web target. Device/data-sensitive actions retain their
+  own authorization requirements.
+- Select affected states/viewports from supported devices, breakpoints, text scaling and
+  changed behavior. Do not require desktop sizes or hover for a native phone flow.
+- Check relevant interactions and uncaught errors. Capture screenshots when needed for visual
+  acceptance or requested; do not repeat whole business flows merely to produce screenshots.
+- Missing tools leave the specific checks unverified. Functional substitutes do not prove
+  visual or real-device acceptance; do not invent an adapter or pass.
 
-For UI-impacting work, resolve the browser acceptance capability before drafting `AC-UI-UX`:
-- an explicit user choice overrides the default
-- otherwise use Chrome MCP
-- substitute the resolved capability name into `spec.md` and `tasks.md`; never leave a generic
-  browser placeholder in generated files
+## Write the package
 
-Create a documentation impact matrix with these boolean keys:
-- `requirements`: affects `docs/1-requirements/project_overview.md` or `docs/1-requirements/requirements_analysis.md`
-- `architecture`: affects `docs/2-designs/architecture.md`
-- `api`: affects `docs/2-designs/api_contract.md`
-- `db`: affects `docs/2-designs/db_schema.md`
-- `ui`: affects `docs/2-designs/ui_prototype.md`
-- `constraints`: affects `docs/3-constraints/ask-first.md`, `always-do.md`, or `never-do.md`
-- `adr`: requires a new ADR under `docs/3-constraints/adr/`
-- `agent-runtime`: affects root/submodule `AGENTS.md`, `.codex/session-start.js`, `init.sh`, or `init.ps1`
+After material choices are resolved, write the feature directory and both files together.
+Generate tasks from actual work, not a fixed layer-by-layer checklist:
 
-Use the matrix to shape ACs, approval prompts, and task order. If any matrix entry cannot be
-classified safely, add a clarification marker instead of guessing.
+- Include implementation and valuable verification for each AC.
+- Settle API/data/shared contracts before dependent implementation where applicable.
+- Reference relevant AC IDs; documentation-only work may use `covers: doc-maintenance`.
+- Include affected test/lint commands and justified broader/release gates. Reuse passing
+  evidence when relevant inputs and conditions are unchanged.
+- Distinguish local checks, remote CI, release validation and production actions. Note major
+  validation costs and stopping conditions; task creation does not authorize remote runs,
+  dependencies, spending, merge or publication.
+- End with verification and truthful task-state maintenance. Incomplete checks stay incomplete.
 
-**Impact classification rules**
-- `requirements` is true when the feature adds or changes business scenarios, user roles,
-  business rules, core workflows, or scope boundaries.
-- `architecture` is true when the feature adds or changes services, modules, layers,
-  cross-module calls, async flows, permission chains, caches, queues, or external systems.
-- `api` is true when the feature adds or changes endpoints, request/response shapes, error
-  codes, authorization behavior, or compatibility behavior.
-- `db` is true when the feature adds or changes tables, fields, indexes, constraints, entity
-  mappings, or migrations.
-- `ui` is true when the feature adds or changes pages, forms, dialogs, visible states,
-  navigation, or user interaction paths.
-- `constraints` is true when the feature creates a long-lived prohibition, mandatory behavior,
-  approval rule, safety boundary, or security boundary.
-- `adr` is true when the feature contains an important technical tradeoff, new dependency,
-  irreversible migration, architecture strategy, or long-lived constraint rationale.
-- `agent-runtime` is true when the feature changes ports, startup commands, health checks,
-  test/lint commands, runnable submodules, or session-start context.
+Update CURRENT_PLAN's active task/current status, preserving unrelated/completed work. Keep
+process history in the existing task report rather than appending repeated snapshots.
 
-Do not mark every document as impacted by default. Simple internal logic changes should usually
-leave most matrix entries false.
+## Check and report
 
-### Phase 3 — Generate draft spec.md
+Verify before finishing:
 
-Generate `spec.md` using `references/templates.md`.
+- Every AC has necessary work and evidence, including platform-appropriate UI checks.
+- Every true documentation impact has maintenance or an explicit reason none is needed.
+- Commands/capabilities are real; generated files have no unresolved template placeholders.
+- Current user decisions are consistent in spec/tasks; update later scope changes rather
+  than retaining obsolete gates or marking them passed.
 
-**Acceptance criteria rules**
-- Write 3–6 AC items.
-- Cover happy path, failure path, edge case, and security where relevant.
-- Use JSON items with:
-  - `id`
-  - `category`
-  - `description`
-  - `steps`
-  - `passes: false`
-- `category` must be one of:
-  - `functional`
-  - `security`
-  - `edge-case`
-  - `performance`
-  - `integration`
-- If the documentation impact matrix marks `ui` as `true`, always add a dedicated integration
-  AC with the fixed id `AC-UI-UX`.
-- `AC-UI-UX` must require the resolved browser capability to perform:
-  - responsive layout verification at `1440x900`
-  - responsive layout verification at `375x812`
-  - hover-state interaction checks for relevant interactive elements
-  - browser console audit with zero JavaScript errors
-  - screenshot archival using explicit, deterministic file names
-- Do not rename `AC-UI-UX`, collapse it into another AC, or omit it when UI/UX behavior changes
-  are in scope.
-
-**Contract awareness**
-- If API changes are required, add an integration AC that requires the implementation
-  to match `docs/2-designs/api_contract.md`.
-- If DB/schema changes are required, add an integration AC that requires the implementation
-  and migration to match `docs/2-designs/db_schema.md`.
-- If both change, cover both contract types explicitly.
-
-**Ambiguity rules**
-- Use `[NEEDS CLARIFICATION: ...]` only for ambiguities that materially change the AC shape.
-- Maximum 3 markers.
-- Do not invent defaults when the ambiguity changes the implementation shape.
-
-Keep the draft `spec.md` in memory only.
-
-### Phase 4 — Clarification round
-
-If there are no clarification markers, skip ahead.
-
-If markers exist:
-- Present all questions at once.
-- Provide 3–4 realistic options plus a custom option.
-- Wait for the user's reply.
-
-After answers:
-1. Replace all clarification markers
-2. Update affected AC steps
-3. Keep finalized `spec.md` in memory only
-4. Confirm that the spec is finalized and you are generating the implementation approach
-
-### Phase 5 — Implementation approach checkpoint
-
-Before generating `tasks.md`, present a concise implementation approach covering:
-- layers involved
-- key reuse or technical decisions
-- implementation order rationale
-- documentation maintenance required by the impact matrix
-
-If API changes are involved, include a request/response payload sketch.
-If DB/schema changes are involved, include a DDL or migration sketch.
-If UI changes are involved, include the interaction/state-flow sketch and the `AC-UI-UX`
-verification plan, including the resolved browser capability, target routes, interactive elements
-to hover, and screenshot names.
-If architecture or ADR changes are involved, include the proposed decision summary.
-
-Ask the user to confirm the approach before generating the task list.
-
-### Phase 6 — Create feature directory and write files
-
-In one step:
-1. Create `docs/4-tasks/features/TASK-{NNN}-{slug}/`
-2. Write finalized `spec.md`
-3. Generate `tasks.md` using `references/templates.md`
-
-**Task rules**
-- Each task must be atomic.
-- Harness documentation maintenance comes first when applicable.
-- Contract updates come before implementation when applicable.
-- Task order is:
-  - Harness long-lived document maintenance if needed
-  - design contracts and ADRs if needed
-  - models/types/data objects
-  - business logic
-  - API/UI layer
-  - tests
-  - verification / housekeeping gates
-- Every non-gate task must reference AC IDs or use `covers: doc-maintenance`.
-- API, DB, architecture, and UI documentation tasks that affect acceptance behavior should
-  reference the relevant AC IDs in addition to any documentation maintenance label.
-- If `ui` is `true`, include at least one implementation or verification task that explicitly
-  covers `AC-UI-UX`.
-- Final tasks must include:
-  - run tests
-  - verify ACs in `spec.md`
-  - update `CURRENT_PLAN.md`
-
-### Phase 7 — Update CURRENT_PLAN.md
-
-Update `docs/4-tasks/CURRENT_PLAN.md`:
-- set active feature
-- add the new task entry under stages
-- preserve existing completed items
-
-### Phase 8 — Consistency check
-
-After writing:
-- every AC must be covered by at least one task
-- if the documentation impact matrix marks `ui` as `true`, `spec.md` must contain `AC-UI-UX`
-- every true documentation impact matrix entry must map to at least one maintenance task, unless
-  `spec.md` explicitly explains why no maintenance is required
-- every non-gate task must reference at least one AC or use `covers: doc-maintenance`
-- generated files must not contain unresolved template placeholders such as `{{...}}`, `{AC ids}`, or unavailable lint/test commands
-- UI task files must contain the resolved browser capability rather than `{resolved BROWSER_CAPABILITY}`
-
-Fix any gaps before finishing.
-
-### Phase 9 — Summary
-
-Print:
-
-```text
-## Task created: TASK-{NNN} — {title}
-
-**Files written:**
-- docs/4-tasks/features/TASK-{NNN}-{slug}/spec.md
-- docs/4-tasks/features/TASK-{NNN}-{slug}/tasks.md
-- docs/4-tasks/CURRENT_PLAN.md
-
-**Acceptance criteria:** {N}
-**Tasks:** {N}
-[if UI is impacted: **Browser acceptance:** {resolved capability}]
-
-**Ready to implement.**
-```
-
-## Important constraints
-
-- `spec.md` is the source of truth.
-- Do not generate tasks until all clarification markers are resolved.
-- Do not generate tasks until the user confirms the implementation approach.
-- One feature per invocation.
-
-## Reference files
-
-- `references/templates.md`
+Briefly report the task path, key decisions and remaining unverified or approval-sensitive
+work. Task creation itself does not constitute implementation or acceptance.
