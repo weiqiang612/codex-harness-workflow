@@ -1,6 +1,6 @@
 ---
 name: project-maintenance
-description: Maintain and simplify an existing project when the user asks to reduce redundant code, unsuitable tests, or unused generated outputs. Deliver a scoped improvement with measured results and preserved behavior.
+description: Maintain and simplify an existing project when the user asks to reduce redundant code, unsuitable tests, unused generated outputs, or confusing task documentation. Deliver a scoped improvement with measured results and preserved behavior.
 ---
 
 <!-- Copyright (c) 2026 weiqiang612. Licensed under the MIT License. Official source: https://github.com/weiqiang612/codex-harness-workflow -->
@@ -21,6 +21,24 @@ State the intended result, verification cost and stopping point briefly.
 Confirm current uses and coverage before deleting anything. Names, age, task numbers and
 zero static references are clues, not proof: manual tools and dynamic entrypoints matter.
 Prefer removing repeated work over introducing another abstraction or configuration layer.
+
+## Maintain task documentation when needed
+
+Use this path when task state conflicts, current conclusions are hard to locate, or repeated
+reports obscure useful material. File count alone does not justify moving or deleting files.
+
+- Identify the maintained specification, execution state, accepted delivery and independent
+  follow-ups. Keep useful materials such as submission forms discoverable; a task's stage
+  completion does not close every later patch or outstanding acceptance check.
+- Give readers a clear entry to those conclusions. Reuse existing navigation where sufficient;
+  add a short index only when it resolves ambiguity. Do not impose a fixed root file count.
+- Group historical drafts and iterations using project conventions. Before moving documents,
+  inspect incoming/outgoing links and manual or scripted path uses. Update affected references
+  and preserve command working-directory assumptions, original evidence and distinct versions.
+- Align current summaries and any existing task index with verified scope and evidence. Label
+  dated snapshots rather than rewriting historical counts, checkboxes or AC results to agree.
+- Verify retained content and affected links; report entry/navigation improvements separately
+  from total file or storage changes. Leave archive layout and retention rules project-specific.
 
 ## Preserve what matters
 

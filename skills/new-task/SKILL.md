@@ -19,7 +19,7 @@ Turn an agreed requirement into `spec.md`, `tasks.md`, and a concise entry in
 - Use fuller planning for actual dependencies, cross-module contracts or material choices.
   These are decision criteria, not extra modes or configuration files.
 - Do not rebuild the Harness, regenerate hooks or update unrelated baselines. Task creation
-  changes only feature spec/tasks and CURRENT_PLAN unless the user asks otherwise.
+  changes feature spec/tasks, CURRENT_PLAN and an existing task index as needed; preserve unrelated files.
 
 ## Read relevant context
 
@@ -42,7 +42,9 @@ If no Harness task directory exists, create only the minimal task structure need
 ## Resolve intent and choices
 
 1. Identify the objective, non-goals, affected behavior and existing implementation to reuse.
-2. For a new package, inspect TASK numbers and choose the next ID and a short slug.
+2. For a new package, check both task directories and any existing index before choosing an
+   unused next ID and a short slug. Existing duplicate IDs are not permission to renumber old
+   tasks; identify related work by its full name/path and avoid adding another collision.
 3. Make routine implementation choices directly within scope.
 4. Ask only when a material choice changes scope, business behavior, contracts, security,
    cost or acceptance, or project rules require authorization not already present. Present
@@ -113,7 +115,12 @@ Generate tasks from actual work, not a fixed layer-by-layer checklist:
 - End with verification and truthful task-state maintenance. Incomplete checks stay incomplete.
 
 Update CURRENT_PLAN's active task/current status, preserving unrelated/completed work. Keep
-process history in the existing task report rather than appending repeated snapshots.
+process history in the existing task report rather than appending repeated snapshots. Reuse
+that report for routine progress; create a separate document when a distinct decision,
+delivery or evidence boundary makes it useful. Keep current conclusions easy to find.
+Align current scope/status and the evidence entry across spec/tasks, CURRENT_PLAN and any
+existing task index. Preserve dated history and distinguish stage completion from independent
+follow-ups or deferred checks; do not make historical ACs pass merely to match a headline.
 
 ## Check and report
 
@@ -122,6 +129,7 @@ Verify before finishing:
 - Every AC has necessary work and evidence, including platform-appropriate UI checks.
 - Every true documentation impact has maintenance or an explicit reason none is needed.
 - Commands/capabilities are real; generated files have no unresolved template placeholders.
+- The task ID is unused and any existing index links the new package with its actual state.
 - Current user decisions are consistent in spec/tasks; update later scope changes rather
   than retaining obsolete gates or marking them passed.
 
