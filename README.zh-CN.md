@@ -2,7 +2,7 @@
 
 > 一套用 Markdown、项目文档和任务契约组织人机协作的 Agent Coding SOP。
 
-Codex Harness Workflow 由 `init-harness`、`new-task` 和 `subagent-orchestrator` 三个 Skill 组成。它的首个完整参考实现面向 Codex；但它的核心不是某个工具的专属 API，而是一套可以迁移到其他 Coding Agent 的协作流程：
+Codex Harness Workflow 包含 `init-harness`、`new-task` 和 `subagent-orchestrator` 三个核心 Skill，以及按需清理和优化的 `project-maintenance`。它的首个完整参考实现面向 Codex；但它的核心不是某个工具的专属 API，而是一套可以迁移到其他 Coding Agent 的协作流程：
 
 ```text
 建立项目 Harness → 把需求变成契约 → 按依赖实施、验证并留痕
@@ -106,6 +106,7 @@ flowchart LR
 | `init-harness` | 建立项目基线、约束与分层上下文 | `AGENTS.md`、设计文档、约束层、初始化环境、任务目录 |
 | `new-task` | 将需求变成经人确认的功能契约 | `spec.md`、验收标准、`tasks.md`、文档影响记录 |
 | `subagent-orchestrator` | 按依赖组织实现、审查、验证与任务关闭 | 实际代码差异、验证证据、任务完成状态 |
+| `project-maintenance` | 在约定范围内简化现有代码、测试或产物 | 可审阅改动、实际收益及验证边界 |
 
 ## `init-harness` 会生成什么
 
@@ -258,6 +259,8 @@ flowchart LR
 
 将 `skills/` 下的三个目录复制到 Codex Skill 目录，重启 Codex，然后在真实项目根目录依次使用：
 
+维护时另复制 `project-maintenance`，可直接使用，不必先创建任务包。
+
 ```text
 使用 init-harness 初始化这个项目。
 ```
@@ -305,6 +308,7 @@ v0.1.0 有意保持边界：不试图仅凭 Skill 覆盖 CI/CD、部署回滚、
 | [`skills/init-harness`](skills/init-harness/) | 项目 Harness 初始化 Skill |
 | [`skills/new-task`](skills/new-task/) | 功能规格与任务生成 Skill |
 | [`skills/subagent-orchestrator`](skills/subagent-orchestrator/) | 多 Agent 实施、审查与验收 Skill |
+| [`skills/project-maintenance`](skills/project-maintenance/) | 小范围清理优化与实际结果说明 |
 | [`docs`](docs/) | 架构、安装、可移植性、案例和发布文档 |
 | [`examples/environmental-monitoring`](examples/environmental-monitoring/) | 真实项目脱敏证据包 |
 | [`examples/minimal-task-board`](examples/minimal-task-board/) | 可独立运行的最小工作流示例 |

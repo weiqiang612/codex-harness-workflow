@@ -2,7 +2,7 @@
 
 > An Agent Coding SOP that uses Markdown, project documents, and task contracts to organize human-AI collaboration.
 
-Codex Harness Workflow consists of three skills: `init-harness`, `new-task`, and `subagent-orchestrator`. Its first fully validated reference implementation targets Codex, but its core is not a tool-specific API. It is a collaboration process that can be adapted to other coding agents:
+Codex Harness Workflow has three core skills: `init-harness`, `new-task`, and `subagent-orchestrator`, plus `project-maintenance` for scoped cleanup and optimization. Its first fully validated reference implementation targets Codex, but its core is not a tool-specific API. It is a collaboration process that can be adapted to other coding agents:
 
 ```text
 Establish a project Harness → turn requirements into contracts → implement, verify, and retain evidence
@@ -106,6 +106,7 @@ flowchart LR
 | `init-harness` | Establish the project baseline, constraints, and layered context | `AGENTS.md`, design documents, constraint layer, bootstrap environment, task tree |
 | `new-task` | Turn a request into a feature contract confirmed by a human | `spec.md`, acceptance criteria, `tasks.md`, documentation-impact record |
 | `subagent-orchestrator` | Coordinate implementation, review, verification, and closeout by dependency | Actual code diffs, verification evidence, task completion state |
+| `project-maintenance` | Simplify existing code, tests or outputs within an agreed scope | Reviewable changes, measured benefit and verification limits |
 
 ## What `init-harness` generates
 
@@ -243,6 +244,8 @@ Read the [full case study](docs/case-study-environmental-monitoring.md), inspect
 
 Copy the `init-harness`, `new-task`, and `subagent-orchestrator` directories under `skills/` into the Codex Skill directory, restart Codex, and use them from the real project root:
 
+For maintenance work, also copy `project-maintenance`; it can be used directly without creating a task package.
+
 ```text
 Use init-harness to initialize this project.
 ```
@@ -290,6 +293,7 @@ v0.1.0 intentionally stays bounded: skills alone do not attempt to cover CI/CD, 
 | [`skills/init-harness`](skills/init-harness/) | Project Harness initialization skill |
 | [`skills/new-task`](skills/new-task/) | Feature specification and task-generation skill |
 | [`skills/subagent-orchestrator`](skills/subagent-orchestrator/) | Multi-agent implementation, review, and acceptance skill |
+| [`skills/project-maintenance`](skills/project-maintenance/) | Scoped cleanup and optimization with concrete outcome reporting |
 | [`docs`](docs/) | Architecture, installation, portability, case study, and release documents |
 | [`examples/environmental-monitoring`](examples/environmental-monitoring/) | Sanitized evidence bundle from real project use |
 | [`examples/minimal-task-board`](examples/minimal-task-board/) | Independently runnable minimal workflow example |

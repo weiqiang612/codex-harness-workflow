@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $skillsRoot = Join-Path $repoRoot 'skills'
-$expectedSkills = @('init-harness', 'new-task', 'subagent-orchestrator')
+$expectedSkills = @('init-harness', 'new-task', 'subagent-orchestrator', 'project-maintenance')
 $requiredPublicFiles = @(
     'README.md',
     'README.zh-CN.md',
