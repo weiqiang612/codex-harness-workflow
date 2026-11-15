@@ -125,6 +125,16 @@ Only after implementation and required acceptance gates pass:
 5. Update long-lived Harness documents only when the implementation changed the facts they describe.
 6. Create a walkthrough or screenshot report only when the task, project conventions, or user requests it.
 
+For Git-backed delivery, consume the checkout, authorization and conditional closeout recorded
+in the task and root `AGENTS.md`. After the authorized merge and applicable checks, carry out
+the permitted primary-branch fast-forward and task-only worktree/branch cleanup; preserve
+required ignored evidence at durable paths first. Keep dirty/divergent checkouts, extra
+commits, unmerged branches or remaining acceptance needs intact and report what remains.
+Do not auto-stash, reset, force-delete or treat merge permission as production permission.
+Record merge/former-head SHAs, actual local primary/remote refs and retained evidence paths.
+Implementation acceptance, PR merge, local synchronization and cleanup are separate states;
+do not report delivery closeout complete while a required step is pending.
+
 ## Final report
 
 Lead with the outcome and include:
@@ -134,6 +144,7 @@ Lead with the outcome and include:
 - tests and acceptance evidence
 - review findings fixed or still open
 - task-document and `CURRENT_PLAN.md` state
+- actual PR/merge, local primary sync and task-branch cleanup state when applicable
 - paths to user-visible screenshots or walkthrough artifacts when produced
 
 Never describe the task as complete if required validation remains unavailable or failing.

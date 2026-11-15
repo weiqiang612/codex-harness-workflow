@@ -99,6 +99,34 @@ capabilities and affected screens rather than copying a universal matrix.
 - Missing tools leave the specific checks unverified. Functional substitutes do not prove
   visual or real-device acceptance; do not invent an adapter or pass.
 
+## Plan Git delivery and local closeout
+
+For Git-backed work, read the project's branch/worktree policy and inspect local/remote refs,
+dirty files and existing worktrees. Record the actual primary checkout and implementation
+branch/worktree (or that implementation has not started) in the existing task/handoff. Reuse
+an existing task checkout; when implementation is authorized, derive a new isolated checkout
+from the refreshed trusted primary branch if that is the project's workflow. Creating a task
+package alone does not create implementation branches, push, merge, run CI or delete anything.
+
+Include a delivery/closeout item in the task checklist when the work will use a task branch:
+after the authorized merge and applicable checks, return to the designated primary checkout,
+fast-forward its primary branch and verify it matches the refreshed remote. Follow the
+project's cleanup authorization for this task only. Dirty/untracked files, local-only commits,
+divergence, unmerged work or remaining acceptance needs leave the relevant steps pending;
+never auto-stash, reset, force-delete or sweep unrelated branches/worktrees to obtain a clean state.
+
+Before removing an eligible worktree, account for ignored candidates, logs, screenshots and
+other evidence; preserve required material at a durable project location and update its links.
+Record the PR merge, former branch head, retained evidence and actual sync/cleanup result.
+If normal branch deletion refuses a squash/rebase result, retain and report it unless the
+project/user explicitly authorizes another verified method. Task creation grants no cleanup
+authorization for other projects; honor the project's policy and reuse existing approval.
+
+Keep these details in existing spec/tasks, CURRENT_PLAN and the task's handoff, not a new
+tracking system or product AC. Distinguish implementation acceptance from PR delivery,
+primary-branch synchronization and local cleanup; each can still be pending independently.
+For non-Git tasks omit this section; do not impose a branch model the project does not use.
+
 ## Write the package
 
 After material choices are resolved, write the feature directory and both files together.
@@ -132,6 +160,8 @@ Verify before finishing:
 - The task ID is unused and any existing index links the new package with its actual state.
 - Current user decisions are consistent in spec/tasks; update later scope changes rather
   than retaining obsolete gates or marking them passed.
+- Git-backed task delivery records the intended checkout, authorization and conditional local
+  sync/cleanup, without claiming that task creation performed those actions.
 
 Briefly report the task path, key decisions and remaining unverified or approval-sensitive
 work. Task creation itself does not constitute implementation or acceptance.

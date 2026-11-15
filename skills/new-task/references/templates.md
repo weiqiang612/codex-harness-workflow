@@ -37,6 +37,12 @@ Use the project's language and existing conventions.
 - {Only material decisions, reuse, changed config keys and outstanding approvals}
 - {Relevant validation commands, evidence to reuse, major cost and stopping conditions}
 
+### Git delivery and local closeout
+{For Git-backed work only: record the project's primary checkout/branch and remote, current
+implementation branch/worktree or not started, and push/merge authorization. Include the
+post-merge fast-forward sync and task-only cleanup conditions. Preserve ignored evidence,
+record merge/former-head SHAs and durable paths, and leave blocked sync/cleanup pending.}
+
 ### Documentation impact
 {For a small task, name affected documents or state none. Use a matrix only when useful or
 required by the project: requirements, architecture, api, db, ui, constraints, adr,
@@ -85,6 +91,14 @@ This is an example, not a mandatory three-step workflow. Generate only meaningfu
 For larger tasks add actual dependencies and work packages. Contract changes precede their
 consumers; unrelated documentation is not an implementation prerequisite. Documentation-only
 work may use `covers: doc-maintenance`; behavior-facing contracts also reference their ACs.
+
+For work delivered on a task branch, include or combine a conditional closeout item: after
+the authorized merge and applicable checks, fast-forward the designated primary checkout,
+preserve required evidence including ignored files, then remove only the eligible task
+worktree and normally delete its merged local branch under project policy. Record PR/merge
+and former-head SHAs, sync result, retained evidence paths and any reason for keeping the
+worktree/branch. Pending merge, dirty/divergent state, extra commits or remaining acceptance
+needs stay pending; task creation never performs cleanup or expands authorization.
 
 Record real test/lint commands and necessary remote/release gates with authorization boundaries.
 Do not emit unavailable commands or unresolved placeholders. Reuse a passing result only when
