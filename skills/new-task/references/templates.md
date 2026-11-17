@@ -39,9 +39,8 @@ Use the project's language and existing conventions.
 
 ### Git delivery and local closeout
 {For Git-backed work only: record the project's primary checkout/branch and remote, current
-implementation branch/worktree or not started, and push/merge authorization. Include the
-post-merge fast-forward sync and task-only cleanup conditions. Preserve ignored evidence,
-record merge/former-head SHAs and durable paths, and leave blocked sync/cleanup pending.}
+implementation branch/worktree or not started, and push/merge authorization. Link any existing
+handoff and use the conditional closeout below for post-merge work.}
 
 ### Documentation impact
 {For a small task, name affected documents or state none. Use a matrix only when useful or
@@ -92,14 +91,6 @@ For larger tasks add actual dependencies and work packages. Contract changes pre
 consumers; unrelated documentation is not an implementation prerequisite. Documentation-only
 work may use `covers: doc-maintenance`; behavior-facing contracts also reference their ACs.
 
-For work delivered on a task branch, include or combine a conditional closeout item: after
-the authorized merge and applicable checks, fast-forward the designated primary checkout,
-preserve required evidence including ignored files, then remove only the eligible task
-worktree and normally delete its merged local branch under project policy. Record PR/merge
-and former-head SHAs, sync result, retained evidence paths and any reason for keeping the
-worktree/branch. Pending merge, dirty/divergent state, extra commits or remaining acceptance
-needs stay pending; task creation never performs cleanup or expands authorization.
-
 Record real test/lint commands and necessary remote/release gates with authorization boundaries.
 Do not emit unavailable commands or unresolved placeholders. Reuse a passing result only when
 its relevant inputs/conditions are unchanged. Verification must cover changed behavior and
@@ -109,8 +100,38 @@ Update `passes` only for verified ACs, check only finished tasks, and mark compl
 current required scope has passed. Record explicit user scope changes instead of pretending
 removed or deferred checks were performed.
 
+## Git closeout for task branches
+
+Use one checklist item with separately reportable outcomes. After the authorized merge and
+applicable checks, act only on the recorded task checkout and within project authorization.
+
+- **Primary sync.** Refresh the remote primary ref. In the designated primary checkout,
+  fast-forward the primary branch only when clean and without unique commits. Verify both refs
+  agree. Leave a dirty or divergent primary untouched and continue eligible handoff and cleanup.
+- **Evidence handoff.** Inspect tracked, untracked and ignored task files. Preserve required
+  candidates, binaries, screenshots and failure/acceptance logs outside the removable
+  checkout. Verify copied evidence, digests for key artifacts and recovery links. A patch
+  does not replace a binary or authorize deletion of unique work.
+- **Task worktree removal.** Confirm actual merge, final delivered and local task heads, and
+  no unique commits or working changes, outstanding evidence or remaining use. For a
+  squash/rebase, verify the exact reviewed head and delivered scope. Remove only the
+  eligible task worktree normally, then evaluate normal local branch deletion separately.
+  If Git refuses deletion, retain and report the branch. Never auto-stash, reset or force-delete.
+
+Record merge and former-head SHAs, each outcome, and durable evidence paths in the existing
+handoff. Task creation does not perform cleanup. Push, merge and production actions retain
+their own authorization.
+
 ## CURRENT_PLAN.md
 
-Make the minimum update to the active feature and current stage/status. Preserve unrelated
-completed entries. Keep history in the existing task report; do not append repeated dated
-snapshots or create a new reporting system.
+Keep the literal `## Active feature` heading for SessionStart. Replace its content with
+links to the current `spec.md` and `tasks.md` and the immediate next step if useful. When
+idle, use an explicit no-task line. Add the heading if a legacy plan lacks it.
+Link an existing index for prior tasks and verify affected links. Leave unrelated legacy
+sections intact during routine task creation.
+
+## Existing verification report
+
+Replace the current verdict in place. Include the scope actually verified, key measurements,
+limitations and recovery pointers. Keep material failures, accepted proofs and distinct
+versions in the report or link to durable evidence. Verify recovery paths after moving it.

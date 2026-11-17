@@ -12,14 +12,15 @@ All file templates for the `init-harness` skill.
 ## Project
 - **Name**: {{PROJECT_NAME}}
 - **Stack**: {{TECH_STACK_SUMMARY}}
-- **Rule**: This file is an index only. All details live in `docs/`.
+- Keep stable commands, guardrails and links here. Keep active state in CURRENT_PLAN and
+  operational procedures in the relevant runbook.
 
 ## Session start
 The `.codex/hooks.json` SessionStart hook runs automatically on every session.
 It injects git context and a compact `CURRENT_PLAN.md` snapshot independently of local service status.
 When a configured service port is not listening, it reports that state and continues without starting or waiting for anything.
 
-Run the platform init script only when the dev server is not running:
+Manual environment startup, when needed:
 - Windows: `pwsh -ExecutionPolicy Bypass -File .\init.ps1`
 - Windows fallback: `powershell -ExecutionPolicy Bypass -File .\init.ps1`
 - macOS/Linux/WSL/Git Bash: `bash init.sh`
@@ -279,78 +280,63 @@ Write-Host "[init] Environment ready."
 ## .codex/session-start.js template
 
 ```javascript
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const fs = require('fs');
+const net = require('net');
 const path = require('path');
 
 const APP_PORT = {{APP_PORT}};
+const root = path.resolve(__dirname, '..');
 
+console.log('\n-- Active task --');
 try {
-  let isRunning = false;
-  let pid = '';
-  if (process.platform === 'win32') {
-    try {
-      const output = execSync(`netstat -ano | findstr :${APP_PORT}`, { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
-      for (const line of output.split('\n')) {
-        if (line.includes('LISTENING')) {
-          const parts = line.trim().split(/\s+/);
-          pid = parts[parts.length - 1];
-          isRunning = true;
-          break;
-        }
-      }
-    } catch {}
+  const lines = fs.readFileSync(path.join(root, 'docs', '4-tasks', 'CURRENT_PLAN.md'), 'utf8')
+    .split(/\r?\n/);
+  const start = lines.findIndex(line => line.trimEnd() === '## Active feature');
+  if (start === -1) {
+    console.log('Active feature section missing; read docs/4-tasks/CURRENT_PLAN.md.');
   } else {
-    try {
-      pid = execSync(`lsof -t -i:${APP_PORT}`, { stdio: ['pipe', 'pipe', 'ignore'] }).toString().trim();
-      if (pid) isRunning = true;
-    } catch {}
-  }
-
-  if (isRunning) {
-    console.log(`✓ Dev server running on port ${APP_PORT} (PID ${pid})`);
-  } else {
-    console.log(`⚠️  Service not started: no listener on port ${APP_PORT}.`);
-    console.log(`   Start manually when needed:`);
-    console.log(`   Windows: pwsh -ExecutionPolicy Bypass -File .\\init.ps1`);
-    console.log(`   macOS/Linux/WSL/Git Bash: bash init.sh`);
-  }
-} catch {}
-
-try {
-  const branch = execSync('git branch --show-current', { stdio: ['pipe', 'pipe', 'ignore'] }).toString().trim();
-  console.log('\n── Branch & status ────────────────────────────────');
-  console.log(`Branch: ${branch || 'unknown'}`);
-  const status = execSync('git status --short', { stdio: ['pipe', 'pipe', 'ignore'] }).toString().trim();
-  if (status) console.log(status.split('\n').slice(0, 10).join('\n'));
-} catch {}
-
-try {
-  console.log('\n── Recent commits ──────────────────────────────────');
-  console.log(execSync('git log -n 3 --oneline', { stdio: ['pipe', 'pipe', 'ignore'] }).toString().trim());
-} catch {}
-
-try {
-  console.log('\n── Active task ─────────────────────────────────────');
-  const planPath = path.join(process.cwd(), 'docs', '4-tasks', 'CURRENT_PLAN.md');
-  if (fs.existsSync(planPath)) {
-    const lines = fs.readFileSync(planPath, 'utf8').split('\n');
-    let found = false;
-    let printed = 0;
-    for (const line of lines) {
-      if (line.startsWith('## Active feature')) found = true;
-      if (found) {
-        console.log(line);
-        printed += 1;
-        if (printed > 10) break;
-      }
+    const preview = [];
+    for (const line of lines.slice(start + 1)) {
+      if (/^#{1,2}(?:\s|$)/.test(line)) break;
+      if (line.trim()) preview.push(line.slice(0, 240));
+      if (preview.length === 8) break;
     }
-  } else {
-    console.log('No CURRENT_PLAN.md found — run /new-task to create your first task.');
+    console.log(preview.length ? preview.join('\n') : 'No active feature.');
   }
-} catch {}
+} catch {
+  console.log('Cannot read docs/4-tasks/CURRENT_PLAN.md.');
+}
 
-console.log('');
+console.log('\n-- Git context --');
+for (const args of [['status', '--short', '--branch'], ['log', '-n', '3', '--oneline']]) {
+  try {
+    const output = execFileSync('git', args, {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 750,
+      maxBuffer: 64 * 1024,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    console.log(output.trim().split(/\r?\n/).slice(0, 10).join('\n'));
+  } catch {}
+}
+
+const host = '127.0.0.1';
+const address = host + ':' + APP_PORT;
+const socket = net.createConnection({ host, port: APP_PORT });
+function report(message) {
+  socket.destroy();
+  console.log(message);
+}
+socket.setTimeout(250);
+socket.once('connect', () => report('Listener reachable at ' + address + '.'));
+socket.once('error', error => {
+  report(error.code === 'ECONNREFUSED'
+    ? 'Service not started: no listener at ' + address + '.'
+    : 'Could not check listener at ' + address + '.');
+});
+socket.once('timeout', () => report('Listener probe timed out at ' + address + '.'));
 ```
 
 ---
@@ -542,14 +528,15 @@ Necessary local edits, affected checks and local commits within the agreed task 
 - ✅ Reuse passing results only when relevant source, dependencies and conditions are unchanged; release candidates still follow project gates
 - ✅ Confirm no secrets are staged
 - ✅ Update `docs/4-tasks/features/<active-task>/tasks.md`
-- ✅ Keep only current state in `docs/4-tasks/CURRENT_PLAN.md`; detailed history belongs in the existing task report
+- ✅ Keep only current state in `docs/4-tasks/CURRENT_PLAN.md`; acceptance evidence and recovery paths belong in the existing task report
 - ✅ Keep `docs/2-designs/` in sync with implementation when contracts change
 
 ## General
 - ✅ Use explicit types where the stack expects them
 - ✅ Define constants for repeated values
 - ✅ Verify changed behavior and add/update regression tests when they protect a meaningful risk
-- ✅ Assess execution/maintenance cost before adding tools or gates; after two failures of the same cause, reassess before another remote run
+- ✅ Apply KISS/YAGNI: reuse project conventions, existing helpers and standard libraries. Add parsing, wrappers or concurrency only to meet a concrete acceptance gap
+- ✅ Reassess after two failures of the same cause before another remote run
 - ✅ Sync long-lived Harness documents (`docs/1-requirements/`, `docs/2-designs/`, `docs/3-constraints/`, `AGENTS.md`) whenever you change what they describe — do not defer documentation updates to later.
 ```
 
@@ -585,22 +572,15 @@ What becomes easier or harder as a result?
 
 ## docs/4-tasks/CURRENT_PLAN.md template
 
-```markdown
-# Current Plan
+Keep the literal `## Active feature` heading. Use the project's language for the body.
+When a task is active, replace the idle line with links to `spec.md` and `tasks.md`
+and a short next step if useful. Link any existing task index outside the active section.
 
-> Session entry point. Read this first every session.
+```markdown
+# 当前计划
 
 ## Active feature
-_None yet — run `/new-task` to create your first task._
-
-## Stages
-<!-- Features are added here automatically by /new-task -->
-
-## Completed
-<!-- Move finished features here with completion date -->
-
-## Notes for next session
-<!-- Context the next agent session will need -->
+当前无活动任务。
 ```
 
 ---

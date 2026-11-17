@@ -181,7 +181,8 @@ memory until the Phase 4 checkpoint.
 
 **Root AGENTS.md rules**
 - Keep it under 100 lines.
-- It is an index, not the place for heavy protocol details.
+- Keep stable commands, guardrails and authoritative entry points here. Put operational procedures
+  in the project's runbooks and changing task/release facts at their maintained sources.
 - It must point to requirements, designs, constraints, and active task docs.
 - It must explain that lightweight session start is handled by `.codex/hooks.json`.
 
@@ -189,7 +190,10 @@ memory until the Phase 4 checkpoint.
 - Generate `.codex/hooks.json` and `.codex/session-start.js`.
 - The hook must stay under 3 seconds.
 - No server startup, database reset, process termination, blocking health checks, or heavy scans.
-- If the configured service port has no listener, report it briefly and continue printing git/task context. Service status is diagnostic, not a prerequisite for task context; still exit successfully without starting or waiting for a service.
+- Always attempt Git and task context independently of the local port probe. Report reachability
+  briefly without claiming service ownership or health. Bound probe and Git waits.
+- Read the literal `## Active feature` section. Keep the preview bounded and report an
+  idle or missing section without printing unrelated plan content.
 - Treat `init.ps1` / `init.sh` as human-triggered, heavyweight bootstrap entrypoints. Never instruct the hook or an agent to invoke them automatically merely because a service is absent.
 
 **Constraints generation**
@@ -250,7 +254,7 @@ because a port is absent. Do not repeat the scaffold inventory already shown in 
 - `init.sh` and `init.ps1` are heavyweight startup only.
 - `.codex/hooks.json` and `.codex/session-start.js` are lightweight session-start only.
 - `docs/3-constraints/` contains rules, not explanations.
-- `docs/4-tasks/CURRENT_PLAN.md` is a template, not an implementation plan.
+- `docs/4-tasks/CURRENT_PLAN.md` is a compact pointer to the current task package.
 - `docs/4-tasks/features/` is populated only by `/new-task`.
 
 ## Reference files

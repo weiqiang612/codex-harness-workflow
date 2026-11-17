@@ -35,20 +35,30 @@ reports obscure useful material. File count alone does not justify moving or del
 - Group historical drafts and iterations using project conventions. Before moving documents,
   inspect incoming/outgoing links and manual or scripted path uses. Update affected references
   and preserve command working-directory assumptions, original evidence and distinct versions.
-- Align current summaries and any existing task index with verified scope and evidence. Label
-  dated snapshots rather than rewriting historical counts, checkboxes or AC results to agree.
-- Verify retained content and affected links; report entry/navigation improvements separately
-  from total file or storage changes. Leave archive layout and retention rules project-specific.
+- Replace superseded current summaries in place. Keep CURRENT_PLAN as a pointer and retain
+  acceptance results, measurements, material failures and recovery paths in the existing report
+  or durable evidence. Preserve the results as recorded for each run. Remove obsolete tracked
+  rules when Git history suffices without a new history directory. Label local-only evidence paths.
+- Verify retained content and affected links. Report navigation improvements separately from
+  storage changes.
 
 ## Preserve what matters
 
 - Tests: retain business behavior, important failure cases and security/data protections.
   Reduce repeated setup or consolidate equivalent coverage when justified; do not mock away
   the boundary being tested. Replace fixed waits with observable completion when appropriate.
-- Outputs: delete only verified project-owned, rebuildable or obsolete items within the
-  existing authorization. Check absolute paths, ownership, tracked status and reparse points.
-  Ignored files are not automatically disposable. Preserve user data, originals, databases,
-  backups, secrets and failure/acceptance evidence according to project rules.
+- Outputs: prefer the official clean command or group known wholly rebuildable caches by
+  directory. Verify absolute paths, ownership, tracked status, active use and reparse points
+  before authorized cleanup. Preserve user data, originals, databases, backups, secrets and
+  failure/acceptance evidence according to project rules. Treat mixed or unknown directories
+  as evidence candidates until checked.
+- Layout: follow project policy. Optional root-level `/.worktrees/` and `/local-archive/`
+  can hold isolated checkouts and local evidence. Before adopting, verify Git ignore and
+  exclusion from build, scan and packaging inputs. Ignore rules do not provide a backup.
+  Move only inventoried evidence. Copy first, verify integrity and recovery paths (hash key
+  artifacts), and remove old copies only within authorization. Preserve required binaries
+  separately from patches. Keep sensitive material out of Git and review text/config for
+  disclosure and project delivery requirements before proposing it for version control.
 - Scope: finish the agreed local work before proposing external actions. Follow existing
   permissions and cost limits; maintenance does not itself authorize CI, publishing or merging.
 

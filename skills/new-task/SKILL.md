@@ -17,7 +17,8 @@ Turn an agreed requirement into `spec.md`, `tasks.md`, and a concise entry in
 - If the user explicitly asks to create a task, create the smallest useful package. Do not
   invent work to fill a template or a minimum number of ACs/tasks.
 - Use fuller planning for actual dependencies, cross-module contracts or material choices.
-  These are decision criteria, not extra modes or configuration files.
+  Reuse existing conventions, helpers and standard libraries. Add a parser, low-level wrapper
+  or concurrency framework only for a specific acceptance gap the simpler approach cannot cover.
 - Do not rebuild the Harness, regenerate hooks or update unrelated baselines. Task creation
   changes feature spec/tasks, CURRENT_PLAN and an existing task index as needed; preserve unrelated files.
 
@@ -108,24 +109,10 @@ an existing task checkout; when implementation is authorized, derive a new isola
 from the refreshed trusted primary branch if that is the project's workflow. Creating a task
 package alone does not create implementation branches, push, merge, run CI or delete anything.
 
-Include a delivery/closeout item in the task checklist when the work will use a task branch:
-after the authorized merge and applicable checks, return to the designated primary checkout,
-fast-forward its primary branch and verify it matches the refreshed remote. Follow the
-project's cleanup authorization for this task only. Dirty/untracked files, local-only commits,
-divergence, unmerged work or remaining acceptance needs leave the relevant steps pending;
-never auto-stash, reset, force-delete or sweep unrelated branches/worktrees to obtain a clean state.
-
-Before removing an eligible worktree, account for ignored candidates, logs, screenshots and
-other evidence; preserve required material at a durable project location and update its links.
-Record the PR merge, former branch head, retained evidence and actual sync/cleanup result.
-If normal branch deletion refuses a squash/rebase result, retain and report it unless the
-project/user explicitly authorizes another verified method. Task creation grants no cleanup
-authorization for other projects; honor the project's policy and reuse existing approval.
-
-Keep these details in existing spec/tasks, CURRENT_PLAN and the task's handoff, not a new
-tracking system or product AC. Distinguish implementation acceptance from PR delivery,
-primary-branch synchronization and local cleanup; each can still be pending independently.
-For non-Git tasks omit this section; do not impose a branch model the project does not use.
+Include conditional closeout in the checklist for task branches. Use the
+[Git closeout guidance](references/templates.md#git-closeout-for-task-branches) to specify
+independent sync, evidence handoff and worktree removal checks. Keep authorization, refs and
+evidence paths in the task package or existing handoff. Omit Git closeout for non-Git tasks.
 
 ## Write the package
 
@@ -142,13 +129,10 @@ Generate tasks from actual work, not a fixed layer-by-layer checklist:
   dependencies, spending, merge or publication.
 - End with verification and truthful task-state maintenance. Incomplete checks stay incomplete.
 
-Update CURRENT_PLAN's active task/current status, preserving unrelated/completed work. Keep
-process history in the existing task report rather than appending repeated snapshots. Reuse
-that report for routine progress; create a separate document when a distinct decision,
-delivery or evidence boundary makes it useful. Keep current conclusions easy to find.
-Align current scope/status and the evidence entry across spec/tasks, CURRENT_PLAN and any
-existing task index. Preserve dated history and distinguish stage completion from independent
-follow-ups or deferred checks; do not make historical ACs pass merely to match a headline.
+Update the current pointer under `## Active feature` in CURRENT_PLAN. Link to the task package
+and existing index instead of mirroring their status or moving unrelated history. Keep
+the current verdict in the existing task report and retain evidence needed for acceptance
+or recovery. Verify that the pointer still resolves after changes.
 
 ## Check and report
 

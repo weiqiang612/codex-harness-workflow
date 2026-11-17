@@ -44,7 +44,8 @@ For each proposed package, record:
 - validation command the subagent should run
 - expected handoff: changed files, tests, risks, and remaining work
 
-Run packages in parallel only when they are dependency-independent and have disjoint write sets. Otherwise sequence them.
+Parallelize only dependency-independent packages with disjoint write sets. Schedule independent
+review after the relevant diff exists when contract, integration or acceptance risk warrants it.
 
 ### Contract-first gate
 
@@ -93,6 +94,11 @@ After development agents finish:
 - After two unsuccessful rounds for the same underlying cause, stop the repeated strategy and diagnose locally before further delegation or remote runs. Different files/errors can share one cause.
 - Respect existing authorization/run limits; ask only for a material decision not already covered.
 
+For authorized CI tracking, use one resumable wait per run and attempt. Record the repository,
+workflow, commit, run ID and attempt in the existing handoff or waiter's state. On interruption,
+resume that identity. A rerun has a new attempt and requires an explicit switch. Use the available
+waiter or a bounded status check with backoff, avoiding short sleep loops in the conversation.
+
 ## Phase 5 — Acceptance
 
 Execute applicable ACs using direct evidence. If the user changes scope, update spec/tasks and
@@ -121,19 +127,19 @@ Only after implementation and required acceptance gates pass:
 1. Set each verified AC's `passes` field to `true`; leave unverified or failing ACs false.
 2. Check only completed items in `tasks.md`. Do not bulk-check incomplete work.
 3. Set task status to completed only when all required tasks and ACs are complete.
-4. Update CURRENT_PLAN's current status minimally, preserving unrelated/completed work; keep process history in the existing task report.
+4. Update the CURRENT_PLAN pointer and replace the current verdict in the existing task report.
+   Retain evidence supporting acceptance, material failures, limitations and recovery.
 5. Update long-lived Harness documents only when the implementation changed the facts they describe.
 6. Create a walkthrough or screenshot report only when the task, project conventions, or user requests it.
 
-For Git-backed delivery, consume the checkout, authorization and conditional closeout recorded
-in the task and root `AGENTS.md`. After the authorized merge and applicable checks, carry out
-the permitted primary-branch fast-forward and task-only worktree/branch cleanup; preserve
-required ignored evidence at durable paths first. Keep dirty/divergent checkouts, extra
-commits, unmerged branches or remaining acceptance needs intact and report what remains.
-Do not auto-stash, reset, force-delete or treat merge permission as production permission.
-Record merge/former-head SHAs, actual local primary/remote refs and retained evidence paths.
-Implementation acceptance, PR merge, local synchronization and cleanup are separate states;
-do not report delivery closeout complete while a required step is pending.
+After the authorized merge and applicable checks, follow the task's closeout and project
+policy. Evaluate primary fast-forward, evidence handoff and task worktree removal independently.
+A dirty/divergent primary checkout blocks its sync only. Verify the task head was delivered and
+the task checkout has no unique changes or remaining acceptance use. Preserve required ignored
+evidence, including actual binaries, and verify recovery paths before normal authorized removal.
+Handle normal branch deletion separately. Preserve blocked checkouts without auto-stash, reset or
+force-delete. Record merge/former-head SHAs, sync and cleanup results, and retained evidence paths.
+Production actions keep their separate authorization.
 
 ## Final report
 

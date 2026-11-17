@@ -181,6 +181,29 @@ The answer is not to start every agent at once. The workflow first creates share
 
 That mirrors a familiar frontend/backend process: **agree on the contract, implement separately, then integrate and accept**. `subagent-orchestrator` coordinates by dependency, constrains write boundaries, inspects real diffs, performs independent review and bounded repair, and closes work only with evidence.
 
+### Maintenance after delivery
+
+`project-maintenance` covers scoped work on an existing project: stale task documents,
+redundant code or tests, and generated outputs that can be safely reclaimed. Use it directly
+from the project root when there is a concrete maintenance problem. It checks current uses
+first and verifies the change with the project's existing checks and evidence.
+
+This update came from three recurring problems in project closeout:
+
+- When a local service is down, some SessionStart hooks exit before showing the active task.
+  The template now reads a bounded `CURRENT_PLAN.md` excerpt independently of the port probe.
+- Repeating progress in plans, checklists, and reports lets the records drift. The plan links
+  to the task package. The report updates its current verdict and retains acceptance evidence
+  and recovery links.
+- Changes in the primary checkout can block its fast-forward after merge. Evidence handoff
+  and worktree removal have their own checks, so a verified, eligible task checkout can
+  still be removed. Archive paths are project choices and require build, scan, and packaging
+  exclusions before adoption.
+
+Before adding a parser, wrapper, or concurrency framework, identify the acceptance gap it
+would cover. When a CI wait is interrupted, resume the same run and attempt to keep the
+verification tied to the intended result.
+
 ## Adapting to Claude Code, Antigravity, and other coding agents
 
 The core of these skills is an SOP, not a Codex-only command set. Their Markdown document structure, task contracts, acceptance criteria, task state, contract-first sequencing, and dependency ordering are reusable.
@@ -244,7 +267,7 @@ Read the [full case study](docs/case-study-environmental-monitoring.md), inspect
 
 Copy the `init-harness`, `new-task`, and `subagent-orchestrator` directories under `skills/` into the Codex Skill directory, restart Codex, and use them from the real project root:
 
-For maintenance work, also copy `project-maintenance`; it can be used directly without creating a task package.
+To use the optional maintenance workflow, also copy `project-maintenance` under `skills/`. Invoke it from the project root, for example: `Use project-maintenance to simplify the task reports and verify the remaining evidence links.`
 
 ```text
 Use init-harness to initialize this project.
